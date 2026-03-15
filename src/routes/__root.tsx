@@ -9,6 +9,7 @@ import { TitleBar } from '@/components/title_bar.tsx'
 import { Toaster } from '@/components/ui/sonner.tsx'
 import { useJwtExpiredHandler } from '@/hooks/use_jwt_expired_handler.ts'
 import { useMalformedGuidesHandler } from '@/hooks/use_malformed_guides_handler.ts'
+import { useOverlaySync } from '@/hooks/use_overlay_sync.ts'
 import { taurpc } from '@/ipc/ipc.ts'
 import { isInImageViewerPath } from '@/lib/image_viewer.ts'
 
@@ -21,6 +22,7 @@ export const Route = createRootRouteWithContext<{
 function Root() {
   useJwtExpiredHandler()
   useMalformedGuidesHandler()
+  useOverlaySync()
   const location = useLocation()
   const isImageViewer = useRef(isInImageViewerPath(location.pathname)) // only check on first mount
 
