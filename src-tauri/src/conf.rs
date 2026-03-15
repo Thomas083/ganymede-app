@@ -23,6 +23,46 @@ const fn default_overlay_mode() -> bool {
     false
 }
 
+const fn default_overlay_clickable_visibility() -> u32 {
+    75
+}
+
+const fn default_overlay_title_bar_offset_x() -> i32 {
+    0
+}
+
+const fn default_overlay_title_bar_offset_y() -> i32 {
+    0
+}
+
+const fn default_overlay_sidebar_offset_y() -> i32 {
+    0
+}
+
+const fn default_overlay_sidebar_collapsed_width() -> u32 {
+    56
+}
+
+const fn default_overlay_sidebar_expanded_width() -> u32 {
+    224
+}
+
+const fn default_overlay_sidebar_height_percent() -> u32 {
+    100
+}
+
+const fn default_overlay_guide_header_width_percent() -> u32 {
+    80
+}
+
+const fn default_overlay_guide_header_offset_x() -> i32 {
+    0
+}
+
+const fn default_overlay_guide_header_offset_y() -> i32 {
+    0
+}
+
 fn default_reset_conf_shortcut() -> String {
     "Alt+Shift+P".to_string()
 }
@@ -163,6 +203,54 @@ pub struct Note {
 #[derive(Debug)]
 #[taurpc::ipc_type]
 #[serde(rename_all = "camelCase")]
+pub struct OverlayTitleBarLayout {
+    #[serde(default = "default_overlay_title_bar_offset_x")]
+    pub offset_x: i32,
+    #[serde(default = "default_overlay_title_bar_offset_y")]
+    pub offset_y: i32,
+}
+
+#[derive(Debug)]
+#[taurpc::ipc_type]
+#[serde(rename_all = "camelCase")]
+pub struct OverlaySidebarLayout {
+    #[serde(default = "default_overlay_sidebar_offset_y")]
+    pub offset_y: i32,
+    #[serde(default = "default_overlay_sidebar_collapsed_width")]
+    pub collapsed_width: u32,
+    #[serde(default = "default_overlay_sidebar_expanded_width")]
+    pub expanded_width: u32,
+    #[serde(default = "default_overlay_sidebar_height_percent")]
+    pub height_percent: u32,
+}
+
+#[derive(Debug)]
+#[taurpc::ipc_type]
+#[serde(rename_all = "camelCase")]
+pub struct OverlayGuideHeaderLayout {
+    #[serde(default = "default_overlay_guide_header_width_percent")]
+    pub width_percent: u32,
+    #[serde(default = "default_overlay_guide_header_offset_x")]
+    pub offset_x: i32,
+    #[serde(default = "default_overlay_guide_header_offset_y")]
+    pub offset_y: i32,
+}
+
+#[derive(Debug)]
+#[taurpc::ipc_type]
+#[serde(rename_all = "camelCase")]
+pub struct OverlayLayout {
+    #[serde(default)]
+    pub title_bar: OverlayTitleBarLayout,
+    #[serde(default)]
+    pub sidebar: OverlaySidebarLayout,
+    #[serde(default)]
+    pub guide_header: OverlayGuideHeaderLayout,
+}
+
+#[derive(Debug)]
+#[taurpc::ipc_type]
+#[serde(rename_all = "camelCase")]
 pub struct Conf {
     pub auto_travel_copy: bool,
     pub show_done_guides: bool,
@@ -183,6 +271,10 @@ pub struct Conf {
     pub auto_open_guides: bool,
     #[serde(default = "default_overlay_mode")]
     pub overlay_mode: bool,
+    #[serde(default = "default_overlay_clickable_visibility")]
+    pub overlay_clickable_visibility: u32,
+    #[serde(default)]
+    pub overlay_layout: OverlayLayout,
     #[serde(default)]
     pub shortcuts: Shortcuts,
 }
@@ -279,6 +371,17 @@ fn get_conf_profile_in_use_mut(conf: &mut Conf) -> Result<&mut Profile, Error> {
 
 fn normalize_conf(conf: &mut Conf) {
     conf.opacity = conf.opacity.clamp(0.0, 0.98);
+    conf.overlay_clickable_visibility = conf.overlay_clickable_visibility.clamp(0, 100);
+    conf.overlay_layout.sidebar.collapsed_width = conf.overlay_layout.sidebar.collapsed_width.clamp(44, 96);
+    conf.overlay_layout.sidebar.expanded_width = conf.overlay_layout.sidebar.expanded_width.clamp(140, 360);
+    conf.overlay_layout.sidebar.height_percent = conf.overlay_layout.sidebar.height_percent.clamp(40, 100);
+    conf.overlay_layout.guide_header.width_percent =
+        conf.overlay_layout.guide_header.width_percent.clamp(50, 100);
+    conf.overlay_layout.title_bar.offset_x = conf.overlay_layout.title_bar.offset_x.clamp(0, 4000);
+    conf.overlay_layout.title_bar.offset_y = conf.overlay_layout.title_bar.offset_y.clamp(0, 4000);
+    conf.overlay_layout.sidebar.offset_y = conf.overlay_layout.sidebar.offset_y.clamp(0, 4000);
+    conf.overlay_layout.guide_header.offset_x = conf.overlay_layout.guide_header.offset_x.clamp(-4000, 4000);
+    conf.overlay_layout.guide_header.offset_y = conf.overlay_layout.guide_header.offset_y.clamp(-4000, 4000);
 }
 
 // Implementations
@@ -324,6 +427,46 @@ impl Default for GuideDisplay {
     }
 }
 
+impl Default for OverlayTitleBarLayout {
+    fn default() -> Self {
+        OverlayTitleBarLayout {
+            offset_x: default_overlay_title_bar_offset_x(),
+            offset_y: default_overlay_title_bar_offset_y(),
+        }
+    }
+}
+
+impl Default for OverlaySidebarLayout {
+    fn default() -> Self {
+        OverlaySidebarLayout {
+            offset_y: default_overlay_sidebar_offset_y(),
+            collapsed_width: default_overlay_sidebar_collapsed_width(),
+            expanded_width: default_overlay_sidebar_expanded_width(),
+            height_percent: default_overlay_sidebar_height_percent(),
+        }
+    }
+}
+
+impl Default for OverlayGuideHeaderLayout {
+    fn default() -> Self {
+        OverlayGuideHeaderLayout {
+            width_percent: default_overlay_guide_header_width_percent(),
+            offset_x: default_overlay_guide_header_offset_x(),
+            offset_y: default_overlay_guide_header_offset_y(),
+        }
+    }
+}
+
+impl Default for OverlayLayout {
+    fn default() -> Self {
+        OverlayLayout {
+            title_bar: OverlayTitleBarLayout::default(),
+            sidebar: OverlaySidebarLayout::default(),
+            guide_header: OverlayGuideHeaderLayout::default(),
+        }
+    }
+}
+
 impl Default for Conf {
     fn default() -> Self {
         let default_profile = Profile::default();
@@ -343,6 +486,8 @@ impl Default for Conf {
             opacity: 0.98,
             auto_open_guides: true,
             overlay_mode: false,
+            overlay_clickable_visibility: default_overlay_clickable_visibility(),
+            overlay_layout: OverlayLayout::default(),
             shortcuts: Shortcuts::default(),
         }
     }

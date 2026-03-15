@@ -27,7 +27,12 @@ export function ReportDialogTrigger({ compact = false, onClick }: { compact?: bo
     <TooltipProvider delayDuration={400}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button className={compact ? 'size-5' : 'size-6 sm:size-8'} onClick={onClick} size="icon" variant="ghost">
+          <Button
+            className={compact ? 'overlay-clickable size-5' : 'size-6 sm:size-8'}
+            onClick={onClick}
+            size="icon"
+            variant="ghost"
+          >
             <BugIcon />
           </Button>
         </TooltipTrigger>

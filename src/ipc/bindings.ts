@@ -16,7 +16,7 @@ export type AuthTokens = { access_token: string; refresh_token: string | null; e
 
 export type AutoPilot = { name: string; position: string }
 
-export type Conf = { autoTravelCopy: boolean; showDoneGuides: boolean; lang?: ConfLang; theme?: ConfTheme; fontSize?: FontSize; guideDisplay?: GuideDisplay; profiles: Profile[]; profileInUse: string; autoPilots: AutoPilot[]; notes: Note[]; opacity: number; autoOpenGuides?: boolean; overlayMode?: boolean; shortcuts?: Shortcuts }
+export type Conf = { autoTravelCopy: boolean; showDoneGuides: boolean; lang?: ConfLang; theme?: ConfTheme; fontSize?: FontSize; guideDisplay?: GuideDisplay; profiles: Profile[]; profileInUse: string; autoPilots: AutoPilot[]; notes: Note[]; opacity: number; autoOpenGuides?: boolean; overlayMode?: boolean; overlayClickableVisibility?: number; overlayLayout?: OverlayLayout; shortcuts?: Shortcuts }
 
 export type ConfError = { Malformed: JsonError } | { CreateConfDir: string } | { ConfDir: string } | { SerializeConf: JsonError } | { UnhandledIo: string } | { SaveConf: string } | "GetProfileInUse" | { ResetConf: ConfError }
 
@@ -77,6 +77,14 @@ export type OpenGuideStep = { step: number; progressionStep: number | null }
 export type PinnedGuides = { profiles: Partial<{ [key in string]: ProfilePinnedGuides }> }
 
 export type PinnedGuidesError = { Malformed: JsonError } | { CreateDir: string } | { ConfDir: string } | { SerializePinnedGuides: JsonError } | { UnhandledIo: string } | { SavePinnedGuides: string } | "LimitReached"
+
+export type OverlayGuideHeaderLayout = { widthPercent?: number; offsetX?: number; offsetY?: number }
+
+export type OverlayLayout = { titleBar?: OverlayTitleBarLayout; sidebar?: OverlaySidebarLayout; guideHeader?: OverlayGuideHeaderLayout }
+
+export type OverlaySidebarLayout = { offsetY?: number; collapsedWidth?: number; expandedWidth?: number; heightPercent?: number }
+
+export type OverlayTitleBarLayout = { offsetX?: number; offsetY?: number }
 
 export type Profile = { id: string; name: string; level?: number; progresses: Progress[]; server_id?: number | null }
 

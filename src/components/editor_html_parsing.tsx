@@ -61,6 +61,8 @@ export function EditorHtmlParsing({
   const navigate = useNavigate()
   const toggleGuideCheckbox = useToggleGuideCheckbox()
   const currentGuide = useGuideIfDefined(guideId)
+  const overlayClickableClass = conf.data.overlayMode ? 'overlay-clickable rounded-md px-1 py-0.5' : undefined
+  const overlayClickableInlineClass = conf.data.overlayMode ? 'overlay-clickable inline-flex rounded-md px-1 py-0.5' : undefined
 
   let checkboxesCount = 0
 
@@ -88,7 +90,10 @@ export function EditorHtmlParsing({
               {prefix}
               {posX !== undefined && posY !== undefined && (
                 <button
-                  className="inline-flex cursor-pointer text-yellow-400 hover:saturate-50 focus:saturate-[12.5%]"
+                  className={cn(
+                    'inline-flex cursor-pointer text-yellow-400 hover:saturate-50 focus:saturate-[12.5%]',
+                    overlayClickableClass,
+                  )}
                   disabled={disabled}
                   id={`copy-position-${posX}-${posY}`}
                   onClick={async () => {
@@ -178,7 +183,10 @@ export function EditorHtmlParsing({
                 {guideId === domGuideId || domGuideId === 0 ? (
                   <Link
                     {...attribs}
-                    className={cn('contents select-none data-[type=guide-step]:no-underline', domNode.attribs.class)}
+                    className={cn(
+                      'contents select-none data-[type=guide-step]:no-underline',
+                      domNode.attribs.class,
+                    )}
                     disabled={disabled}
                     draggable={false}
                     params={{ id: domGuideId === 0 ? (guideId ?? domGuideId) : domGuideId }}
@@ -188,7 +196,12 @@ export function EditorHtmlParsing({
                     {!hasGoToGuideIcon && (
                       <img alt="" className="size-5 select-none" data-icon draggable={false} src={goToStepIcon} />
                     )}
-                    <span className="group-focus-within:saturate-[25%] peer-hover:saturate-200 hover:saturate-200 focus:saturate-[25%]">
+                    <span
+                      className={cn(
+                        'hover:saturate-200 focus:saturate-[25%] group-focus-within:saturate-[25%] peer-hover:saturate-200',
+                        overlayClickableInlineClass,
+                      )}
+                    >
                       {domToReact(domNode.children as DOMNode[], options)}
                     </span>
                   </Link>
@@ -234,7 +247,12 @@ export function EditorHtmlParsing({
                         src={goToStepIcon}
                       />
                     )}
-                    <span className="group-focus-within:saturate-[25%] peer-hover:saturate-200 hover:saturate-200 focus:saturate-[25%]">
+                    <span
+                      className={cn(
+                        'hover:saturate-200 focus:saturate-[25%] group-focus-within:saturate-[25%] peer-hover:saturate-200',
+                        overlayClickableInlineClass,
+                      )}
+                    >
                       {domToReact(domNode.children as DOMNode[], options)}
                     </span>
                   </button>
@@ -319,10 +337,15 @@ export function EditorHtmlParsing({
                 })()}
                 type="button"
               >
-                <span className="peer group-focus-within:saturate-[25%] group-hover:saturate-150">
+                <span className={cn('peer group-focus-within:saturate-[25%] group-hover:saturate-150', overlayClickableClass)}>
                   {domToReact([domNode.children[0]] as DOMNode[], options)}
                 </span>
-                <span className="group-focus-within:saturate-[25%] group-hover:saturate-150 hover:saturate-150 focus:saturate-[25%]">
+                <span
+                  className={cn(
+                    'hover:saturate-150 focus:saturate-[25%] group-focus-within:saturate-[25%] group-hover:saturate-150',
+                    overlayClickableClass,
+                  )}
+                >
                   {name}
                 </span>
               </button>
@@ -381,6 +404,7 @@ export function EditorHtmlParsing({
                 'inline-flex select-none',
                 isIcon && '-translate-y-0.5 text-[0.8em]',
                 !isIcon && 'cursor-pointer! pb-2',
+                clickable && overlayClickableClass,
                 domClassName,
               )}
               draggable={false}
@@ -420,7 +444,10 @@ export function EditorHtmlParsing({
 
           return (
             <button
-              className="inline-flex cursor-pointer text-yellow-300 underline [&_a]:underline"
+              className={cn(
+                'inline-flex cursor-pointer text-yellow-300 underline [&_a]:underline',
+                overlayClickableClass,
+              )}
               data-href={href}
               disabled={disabled}
               id={`open-link-${href.slice(0, 10)}`}

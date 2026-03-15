@@ -59,6 +59,13 @@ export function TitleBar() {
   const isImageViewer = isInImageViewerPath(location.pathname)
   const title = location.search.title || 'Ganymède'
   const isOverlayMode = conf.data?.overlayMode ?? false
+  const overlayTitleBar = conf.data?.overlayLayout?.titleBar
+  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1280
+  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 720
+  const titleBarWidth = 84
+  const titleBarHeight = 30
+  const overlayTitleBarLeft = Math.max(0, Math.min(overlayTitleBar?.offsetX ?? 0, Math.max(0, viewportWidth - titleBarWidth)))
+  const overlayTitleBarTop = Math.max(0, Math.min(overlayTitleBar?.offsetY ?? 0, Math.max(0, viewportHeight - titleBarHeight)))
 
   return (
     <div
@@ -67,6 +74,15 @@ export function TitleBar() {
         isOverlayMode && 'w-fit rounded-br-md shadow-md',
       )}
       data-overlay-interactive="true"
+      style={
+        isOverlayMode
+          ? {
+              left: `${overlayTitleBarLeft}px`,
+              top: `${overlayTitleBarTop}px`,
+              position: 'fixed',
+            }
+          : undefined
+      }
     >
       {!linksAreDisabled && !isImageViewer && (
         <DropdownMenu>

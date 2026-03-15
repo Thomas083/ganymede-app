@@ -45,7 +45,32 @@ export function GuidePage({ id, stepIndex: index }: { id: number; stepIndex: num
   const setConf = useSetConf()
   const navigate = useNavigate()
   const isOverlayMode = conf.data.overlayMode ?? false
-  const overlaySidebarWidth = isOverlayMode ? 56 : 0
+  const overlaySidebarWidth = isOverlayMode ? (conf.data.overlayLayout?.sidebar?.collapsedWidth ?? 56) : 0
+  const overlayHeader = conf.data.overlayLayout?.guideHeader
+  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1280
+  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 720
+  const guideHeaderTopBase = 70
+  const guideHeaderHeight = 40
+  const overlayHeaderWidthPercent = overlayHeader?.widthPercent ?? 80
+  const guideHeaderContainerWidth = Math.max(240, ((viewportWidth - overlaySidebarWidth) * overlayHeaderWidthPercent) / 100)
+  const overlayHeaderLeft = isOverlayMode
+    ? Math.max(
+        0,
+        Math.min(
+          overlaySidebarWidth + (overlayHeader?.offsetX ?? 0),
+          Math.max(0, viewportWidth - guideHeaderContainerWidth),
+        ),
+      )
+    : 0
+  const overlayHeaderTopOffset = isOverlayMode
+    ? Math.max(
+        -guideHeaderTopBase,
+        Math.min(
+          overlayHeader?.offsetY ?? 0,
+          Math.max(-guideHeaderTopBase, viewportHeight - guideHeaderTopBase - guideHeaderHeight),
+        ),
+      )
+    : 0
   const [noteOpen, setNoteOpen] = useState(false)
   const [noteStepIndex, setNoteStepIndex] = useState(index)
   const [guideNotesOpen, setGuideNotesOpen] = useState(false)
@@ -188,16 +213,20 @@ export function GuidePage({ id, stepIndex: index }: { id: number; stepIndex: num
         className={cn('fixed top-[70px] z-10', !isSmallGuide && 'sm:top-[66px]')}
         style={{
           backgroundColor: bgColor,
-          left: isOverlayMode ? `${overlaySidebarWidth}px` : 0,
+          left: isOverlayMode ? `${overlayHeaderLeft}px` : 0,
           right: 0,
+          transform: isOverlayMode ? `translateY(${overlayHeaderTopOffset}px)` : undefined,
         }}
       >
-        <div className={cn('flex h-10 items-center p-1', isOverlayMode && 'mx-auto w-[80%] min-w-0')}>
+        <div
+          className={cn('flex h-10 items-center p-1', isOverlayMode && 'mx-auto min-w-0')}
+          style={isOverlayMode ? { width: `${overlayHeader?.widthPercent ?? 80}%` } : undefined}
+        >
           {step && (
             <>
               <div className={cn('flex w-16 shrink-0 items-center justify-start pl-1', isOverlayMode && 'w-10 pl-0')}>
                 {step.map !== null && step.map.toLowerCase() !== 'nomap' && (
-                  <Position pos_x={step.pos_x} pos_y={step.pos_y} />
+                  <Position compact={isOverlayMode} pos_x={step.pos_x} pos_y={step.pos_y} />
                 )}
               </div>
 

@@ -306,6 +306,7 @@
       sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     --default-font-family: var(--font-sans);
     --opacity: 0.93;
+    --overlay-clickable-visibility: 0.75;
   }
 
   :where(*) {
@@ -550,6 +551,18 @@
       text-align: left;
       word-break: break-all;
     }
+  }
+
+  .overlay-clickable {
+    background: color-mix(
+      in srgb,
+      var(--color-surface-card) calc(var(--overlay-clickable-visibility) * 100%),
+      transparent
+    );
+    box-shadow:
+      0 0 0 1px
+      color-mix(in srgb, var(--color-border-muted) calc(var(--overlay-clickable-visibility) * 100%), transparent);
+    backdrop-filter: blur(1px);
   }
 }
 

@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { createRootRouteWithContext, Outlet, useLocation } from '@tanstack/react-router'
 import { error } from '@tauri-apps/plugin-log'
 import { Suspense, useEffect, useRef } from 'react'
@@ -12,6 +13,7 @@ import { useMalformedGuidesHandler } from '@/hooks/use_malformed_guides_handler.
 import { useOverlaySync } from '@/hooks/use_overlay_sync.ts'
 import { taurpc } from '@/ipc/ipc.ts'
 import { isInImageViewerPath } from '@/lib/image_viewer.ts'
+import { confQuery } from '@/queries/conf.query.ts'
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
@@ -23,6 +25,7 @@ function Root() {
   useJwtExpiredHandler()
   useMalformedGuidesHandler()
   useOverlaySync()
+  const conf = useQuery(confQuery)
   const location = useLocation()
   const isImageViewer = useRef(isInImageViewerPath(location.pathname)) // only check on first mount
 
@@ -33,6 +36,11 @@ function Root() {
       })
     }
   }, [])
+
+  useEffect(() => {
+    const visibility = (conf.data?.overlayClickableVisibility ?? 75) / 100
+    window.document.documentElement.style.setProperty('--overlay-clickable-visibility', visibility.toFixed(2))
+  }, [conf.data?.overlayClickableVisibility])
 
   return (
     <>

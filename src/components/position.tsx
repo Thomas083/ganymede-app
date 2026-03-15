@@ -3,10 +3,11 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip.tsx'
+import { cn } from '@/lib/utils.ts'
 import { copyPosition } from '@/lib/copy_position.ts'
 import { confQuery } from '@/queries/conf.query.ts'
 
-export function Position({ pos_x, pos_y }: { pos_x: number; pos_y: number }) {
+export function Position({ pos_x, pos_y, compact = false }: { pos_x: number; pos_y: number; compact?: boolean }) {
   const { t } = useLingui()
   const conf = useSuspenseQuery(confQuery)
 
@@ -20,7 +21,14 @@ export function Position({ pos_x, pos_y }: { pos_x: number; pos_y: number }) {
     <TooltipProvider delayDuration={400}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <button className="cursor-pointer text-start text-sm text-yellow-400" onClick={onClick}>
+          <button
+            className={cn(
+              'cursor-pointer text-start text-sm text-yellow-400',
+              compact &&
+                'overlay-clickable rounded-md px-1.5 py-0.5 text-xs',
+            )}
+            onClick={onClick}
+          >
             [{pos_x},{pos_y}]
           </button>
         </TooltipTrigger>

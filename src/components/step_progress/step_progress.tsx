@@ -79,7 +79,10 @@ export function StepProgress({
     <div className={cn('flex min-w-0 flex-1 items-center gap-1', compact && 'gap-0.5')} onWheel={handleWheel}>
       <ShortcutTooltip description={t`Précédent`} shortcut={conf.shortcuts?.goPreviousStep}>
         <Button
-          className={cn('size-6 shrink-0 opacity-60 hover:opacity-100', compact && 'size-5')}
+          className={cn(
+            'size-6 shrink-0 opacity-60 hover:opacity-100',
+            compact && 'overlay-clickable size-5 opacity-100',
+          )}
           disabled={currentIndex === 0}
           onClick={onPrevious}
           size="icon"
@@ -95,7 +98,7 @@ export function StepProgress({
             <div
               className={cn(
                 'relative flex h-5 min-w-0 flex-1 cursor-pointer touch-none items-center justify-center overflow-hidden rounded-[6px] bg-surface-inset',
-                compact && 'h-4 rounded-[5px]',
+                compact && 'overlay-clickable h-4 rounded-[5px]',
               )}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
@@ -121,7 +124,10 @@ export function StepProgress({
 
       <ShortcutTooltip description={t`Suivant`} shortcut={conf.shortcuts?.goNextStep}>
         <Button
-          className={cn('size-6 shrink-0 opacity-60 hover:opacity-100', compact && 'size-5')}
+          className={cn(
+            'size-6 shrink-0 opacity-60 hover:opacity-100',
+            compact && 'overlay-clickable size-5 opacity-100',
+          )}
           disabled={currentIndex === maxIndex}
           onClick={onNext}
           size="icon"

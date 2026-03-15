@@ -23,7 +23,12 @@ export function SummaryDialogTrigger({ compact = false, onClick }: { compact?: b
     <TooltipProvider>
       <Tooltip delayDuration={400}>
         <TooltipTrigger asChild>
-          <Button className={compact ? 'size-5' : 'size-6 sm:size-8'} onClick={onClick} size="icon" variant="ghost">
+          <Button
+            className={compact ? 'overlay-clickable size-5' : 'size-6 sm:size-8'}
+            onClick={onClick}
+            size="icon"
+            variant="ghost"
+          >
             <BookTextIcon />
           </Button>
         </TooltipTrigger>

@@ -524,6 +524,14 @@ function GuideIdPage() {
     }
   }, [])
 
+  const overlaySidebar = conf.data.overlayLayout?.sidebar
+  const sidebarCollapsedWidth = overlaySidebar?.collapsedWidth ?? 56
+  const sidebarExpandedWidth = overlaySidebar?.expandedWidth ?? 224
+  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 720
+  const availableSidebarHeight = Math.max(0, viewportHeight - 30)
+  const sidebarOffsetY = Math.max(0, Math.min(overlaySidebar?.offsetY ?? 0, Math.max(0, availableSidebarHeight - 48)))
+  const sidebarHeightPercent = overlaySidebar?.heightPercent ?? 100
+
   return (
     <PageContent key="guide">
       <Tabs
@@ -545,9 +553,19 @@ function GuideIdPage() {
             className={cn(
               'flex w-full bg-surface-card text-primary-foreground-800',
               isOverlayMode &&
-                'group/overlay-tabs w-14 shrink-0 flex-col border-r border-border-muted transition-[width] duration-150 hover:w-56',
+                'group/overlay-tabs shrink-0 flex-col border-r border-border-muted transition-[width] duration-150 w-[var(--overlay-sidebar-collapsed-width)] hover:w-[var(--overlay-sidebar-expanded-width)]',
             )}
             data-overlay-interactive="true"
+            style={
+              isOverlayMode
+                ? {
+                    ['--overlay-sidebar-collapsed-width' as string]: `${sidebarCollapsedWidth}px`,
+                    ['--overlay-sidebar-expanded-width' as string]: `${sidebarExpandedWidth}px`,
+                    marginTop: `${sidebarOffsetY}px`,
+                    height: `calc((100vh - var(--spacing-titlebar) - ${sidebarOffsetY}px) * ${sidebarHeightPercent} / 100)`,
+                  }
+                : undefined
+            }
           >
             <TabsList
               className={cn(

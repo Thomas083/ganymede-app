@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useLocation } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { error } from '@tauri-apps/plugin-log'
 import { InteractiveRegion } from '@/ipc/bindings.ts'
@@ -48,8 +49,23 @@ function collectInteractiveRegions() {
   return elements.filter(isVisible).map((element) => toInteractiveRegion(element.getBoundingClientRect()))
 }
 
+function getFullWindowInteractiveRegion(): InteractiveRegion[] {
+  const scale = window.devicePixelRatio || 1
+
+  return [
+    {
+      x: 0,
+      y: 0,
+      width: Math.round(window.innerWidth * scale),
+      height: Math.round(window.innerHeight * scale),
+    },
+  ]
+}
+
 export function useOverlaySync() {
   const conf = useQuery(confQuery)
+  const location = useLocation()
+  const isSettingsRoute = location.pathname === '/settings'
 
   useEffect(() => {
     if (!conf.data?.overlayMode) {
@@ -72,7 +88,9 @@ export function useOverlaySync() {
     function syncNow() {
       frameId = 0
 
-      setInteractiveRegions(collectInteractiveRegions()).then((result) => {
+      const interactiveRegions = isSettingsRoute ? getFullWindowInteractiveRegion() : collectInteractiveRegions()
+
+      setInteractiveRegions(interactiveRegions).then((result) => {
         if (result.isErr()) {
           error(`Failed to sync overlay regions: ${String(result.error.cause)}`)
         }
@@ -111,5 +129,5 @@ export function useOverlaySync() {
       window.removeEventListener('resize', scheduleSync)
       window.removeEventListener('scroll', scheduleSync, true)
     }
-  }, [conf.data?.overlayMode])
+  }, [conf.data?.overlayMode, isSettingsRoute])
 }
