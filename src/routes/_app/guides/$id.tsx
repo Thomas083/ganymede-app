@@ -20,6 +20,7 @@ import { getGuideById, getStepClamped } from '@/lib/guide.ts'
 import { getProfile } from '@/lib/profile.ts'
 import { getProgress } from '@/lib/progress.ts'
 import { OpenedGuideDropPosition, reorderOpenedGuides } from '@/lib/tabs.ts'
+import { cn } from '@/lib/utils.ts'
 import { confQuery } from '@/queries/conf.query.ts'
 import { guidesQuery } from '@/queries/guides.query.ts'
 import { stepNotesQuery } from '@/queries/step_notes.query.ts'
@@ -124,16 +125,16 @@ function areTabsEqual(left: number[], right: number[]) {
   return left.length === right.length && left.every((tab, index) => tab === right[index])
 }
 
-function getTabsAutoScrollDelta(clientX: number, tabsListRect: DOMRect) {
-  const leftEdgeDistance = clientX - tabsListRect.left
-  const rightEdgeDistance = tabsListRect.right - clientX
+function getTabsAutoScrollDelta(clientX: number, clientY: number, tabsListRect: DOMRect, isVertical: boolean) {
+  const startEdgeDistance = isVertical ? clientY - tabsListRect.top : clientX - tabsListRect.left
+  const endEdgeDistance = isVertical ? tabsListRect.bottom - clientY : tabsListRect.right - clientX
 
-  if (leftEdgeDistance < GUIDE_TAB_AUTO_SCROLL_EDGE_PX) {
-    return -getTabsAutoScrollSpeed(GUIDE_TAB_AUTO_SCROLL_EDGE_PX - leftEdgeDistance)
+  if (startEdgeDistance < GUIDE_TAB_AUTO_SCROLL_EDGE_PX) {
+    return -getTabsAutoScrollSpeed(GUIDE_TAB_AUTO_SCROLL_EDGE_PX - startEdgeDistance)
   }
 
-  if (rightEdgeDistance < GUIDE_TAB_AUTO_SCROLL_EDGE_PX) {
-    return getTabsAutoScrollSpeed(GUIDE_TAB_AUTO_SCROLL_EDGE_PX - rightEdgeDistance)
+  if (endEdgeDistance < GUIDE_TAB_AUTO_SCROLL_EDGE_PX) {
+    return getTabsAutoScrollSpeed(GUIDE_TAB_AUTO_SCROLL_EDGE_PX - endEdgeDistance)
   }
 
   return 0
@@ -159,6 +160,8 @@ function GuideIdPage() {
   const navigate = Route.useNavigate()
   const profile = useProfile()
   const guides = useSuspenseQuery(guidesQuery())
+  const conf = useSuspenseQuery(confQuery)
+  const isOverlayMode = conf.data.overlayMode ?? false
   const tabsListRef = useRef<HTMLDivElement | null>(null)
   const pendingDragRef = useRef<PendingGuideTabDrag | null>(null)
   const draggedTabIdRef = useRef<number | null>(null)
@@ -273,58 +276,69 @@ function GuideIdPage() {
     [preventNextClick],
   )
 
-  const getDropTargetFromPointer = useCallback((clientX: number, clientY: number, guideId: number) => {
-    const tabsList = tabsListRef.current
+  const getDropTargetFromPointer = useCallback(
+    (clientX: number, clientY: number, guideId: number) => {
+      const tabsList = tabsListRef.current
 
-    if (!tabsList) {
-      return null
-    }
-
-    const tabsListRect = tabsList.getBoundingClientRect()
-
-    if (
-      clientY < tabsListRect.top - GUIDE_TAB_DROP_VERTICAL_PADDING_PX ||
-      clientY > tabsListRect.bottom + GUIDE_TAB_DROP_VERTICAL_PADDING_PX
-    ) {
-      return null
-    }
-
-    const otherTabs = Array.from(tabsList.querySelectorAll<HTMLElement>('[data-guide-tab="true"]'))
-      .map((tab) => {
-        const tabId = Number(tab.dataset.guideId)
-        const tabRect = tab.getBoundingClientRect()
-
-        return {
-          id: tabId,
-          centerX: tabRect.left + tabRect.width / 2,
-        }
-      })
-      .filter((tab) => !Number.isNaN(tab.id) && tab.id !== guideId)
-
-    if (otherTabs.length === 0) {
-      return null
-    }
-
-    const firstTabAfterPointer = otherTabs.find((tab) => clientX < tab.centerX)
-
-    if (firstTabAfterPointer) {
-      return {
-        id: firstTabAfterPointer.id,
-        position: 'before' as const,
+      if (!tabsList) {
+        return null
       }
-    }
 
-    const lastTab = otherTabs.at(-1)
+      const tabsListRect = tabsList.getBoundingClientRect()
 
-    if (!lastTab) {
-      return null
-    }
+      if (isOverlayMode) {
+        if (
+          clientX < tabsListRect.left - GUIDE_TAB_DROP_VERTICAL_PADDING_PX ||
+          clientX > tabsListRect.right + GUIDE_TAB_DROP_VERTICAL_PADDING_PX
+        ) {
+          return null
+        }
+      } else if (
+        clientY < tabsListRect.top - GUIDE_TAB_DROP_VERTICAL_PADDING_PX ||
+        clientY > tabsListRect.bottom + GUIDE_TAB_DROP_VERTICAL_PADDING_PX
+      ) {
+        return null
+      }
 
-    return {
-      id: lastTab.id,
-      position: 'after' as const,
-    }
-  }, [])
+      const otherTabs = Array.from(tabsList.querySelectorAll<HTMLElement>('[data-guide-tab="true"]'))
+        .map((tab) => {
+          const tabId = Number(tab.dataset.guideId)
+          const tabRect = tab.getBoundingClientRect()
+
+          return {
+            id: tabId,
+            center: isOverlayMode ? tabRect.top + tabRect.height / 2 : tabRect.left + tabRect.width / 2,
+          }
+        })
+        .filter((tab) => !Number.isNaN(tab.id) && tab.id !== guideId)
+
+      if (otherTabs.length === 0) {
+        return null
+      }
+
+      const pointerPosition = isOverlayMode ? clientY : clientX
+      const firstTabAfterPointer = otherTabs.find((tab) => pointerPosition < tab.center)
+
+      if (firstTabAfterPointer) {
+        return {
+          id: firstTabAfterPointer.id,
+          position: 'before' as const,
+        }
+      }
+
+      const lastTab = otherTabs.at(-1)
+
+      if (!lastTab) {
+        return null
+      }
+
+      return {
+        id: lastTab.id,
+        position: 'after' as const,
+      }
+    },
+    [isOverlayMode],
+  )
 
   const updateDropTargetFromPointer = useCallback(
     (clientX: number, clientY: number, guideId: number) => {
@@ -366,23 +380,30 @@ function GuideIdPage() {
         return
       }
 
-      const scrollDelta = getTabsAutoScrollDelta(pointer.clientX, tabsListRect)
+      const scrollDelta = getTabsAutoScrollDelta(pointer.clientX, pointer.clientY, tabsListRect, isOverlayMode)
 
       if (scrollDelta === 0) {
         return
       }
 
-      const previousScrollLeft = tabsList.scrollLeft
-      tabsList.scrollLeft += scrollDelta
+      const previousScrollPosition = isOverlayMode ? tabsList.scrollTop : tabsList.scrollLeft
 
-      if (tabsList.scrollLeft === previousScrollLeft) {
+      if (isOverlayMode) {
+        tabsList.scrollTop += scrollDelta
+      } else {
+        tabsList.scrollLeft += scrollDelta
+      }
+
+      const nextScrollPosition = isOverlayMode ? tabsList.scrollTop : tabsList.scrollLeft
+
+      if (nextScrollPosition === previousScrollPosition) {
         return
       }
 
       updateDropTargetFromPointer(pointer.clientX, pointer.clientY, pendingDrag.guideId)
       scheduleTabAutoScroll()
     })
-  }, [updateDropTargetFromPointer])
+  }, [isOverlayMode, updateDropTargetFromPointer])
 
   const onTabPointerDown = useCallback((evt: ReactPointerEvent<HTMLDivElement>, guideId: number) => {
     if (evt.button !== 0) {
@@ -519,58 +540,78 @@ function GuideIdPage() {
         }}
         value={params.id.toString()}
       >
-        <div className="flex w-full bg-surface-card text-primary-foreground-800">
-          <TabsList
-            className="group scrollbar-hide h-10 flex-1 overflow-x-auto overflow-y-hidden pl-0"
-            data-multiple={tabs.length > 1 ? 'true' : 'false'}
-            onWheel={(e) => {
-              if (e.deltaY !== 0) {
-                e.currentTarget.scrollLeft += e.deltaY
-              }
-            }}
-            ref={tabsListRef}
+        <div className={cn('flex flex-col', isOverlayMode && 'h-[calc(100vh-var(--spacing-titlebar))] flex-row')}>
+          <div
+            className={cn(
+              'flex w-full bg-surface-card text-primary-foreground-800',
+              isOverlayMode && 'w-14 shrink-0 flex-col border-r border-border-muted',
+            )}
           >
-            {tabs.map((guideId) => (
-              <GuideTabsTrigger
-                currentId={params.id}
-                dropPosition={dropTarget?.id === guideId ? dropTarget.position : null}
-                id={guideId}
-                isDragging={draggedTabId === guideId}
-                key={guideId}
-                onTabPointerDown={onTabPointerDown}
-              />
-            ))}
-          </TabsList>
+            <TabsList
+              className={cn(
+                'group scrollbar-hide h-10 flex-1 overflow-x-auto overflow-y-hidden pl-0',
+                isOverlayMode && 'h-full w-full flex-col overflow-x-hidden overflow-y-auto px-1 py-1',
+              )}
+              data-multiple={tabs.length > 1 ? 'true' : 'false'}
+              data-overlay-mode={isOverlayMode ? 'true' : 'false'}
+              onWheel={(e) => {
+                if (!isOverlayMode && e.deltaY !== 0) {
+                  e.currentTarget.scrollLeft += e.deltaY
+                }
+              }}
+              ref={tabsListRef}
+            >
+              {tabs.map((guideId) => (
+                <GuideTabsTrigger
+                  currentId={params.id}
+                  dropPosition={dropTarget?.id === guideId ? dropTarget.position : null}
+                  id={guideId}
+                  isDragging={draggedTabId === guideId}
+                  isOverlayMode={isOverlayMode}
+                  key={guideId}
+                  onTabPointerDown={onTabPointerDown}
+                />
+              ))}
+            </TabsList>
 
-          <div className="flex items-center gap-1 px-3">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button asChild className="min-h-6 min-w-6 shrink-0 self-center" size="icon" variant="secondary">
-                    <Link
-                      draggable={false}
-                      search={{
-                        path: '',
-                        from: params.id,
-                      }}
-                      to="/guides"
+            <div className={cn('flex items-center gap-1 px-3', isOverlayMode && 'justify-center px-1 py-1')}>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      asChild
+                      className={cn('min-h-6 min-w-6 shrink-0 self-center', isOverlayMode && 'h-10 w-10 rounded-md')}
+                      size="icon"
+                      variant="secondary"
                     >
-                      <PlusIcon />
-                    </Link>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <Trans>Ouvrir un guide</Trans>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                      <Link
+                        draggable={false}
+                        search={{
+                          path: '',
+                          from: params.id,
+                        }}
+                        to="/guides"
+                      >
+                        <PlusIcon />
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side={isOverlayMode ? 'right' : 'bottom'}>
+                    <Trans>Ouvrir un guide</Trans>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            {tabs.map((guide) => (
+              <TabsContent className="h-full" key={`guide-${guide}`} value={guide.toString()}>
+                <GuidePage id={guide} stepIndex={getStepClamped(guides.data, params.id, search.step)} />
+              </TabsContent>
+            ))}
           </div>
         </div>
-        {tabs.map((guide) => (
-          <TabsContent key={`guide-${guide}`} value={guide.toString()}>
-            <GuidePage id={guide} stepIndex={getStepClamped(guides.data, params.id, search.step)} />
-          </TabsContent>
-        ))}
       </Tabs>
     </PageContent>
   )

@@ -30,6 +30,7 @@ import {
 import { useIsBodyLockedFromDialog } from '@/hooks/use_is_body_locked_from_dialog.ts'
 import { getLang } from '@/lib/conf.ts'
 import { isInImageViewerPath } from '@/lib/image_viewer.ts'
+import { cn } from '@/lib/utils.ts'
 import { useCleanAuthTokens } from '@/mutations/clean_auth_tokens.mutation.ts'
 import { useOpenDofusDbHunt } from '@/mutations/open_dofusdb_hunt.mutation.ts'
 import { useOpenDofusDbMap } from '@/mutations/open_dofusdb_map.mutation.ts'
@@ -57,9 +58,16 @@ export function TitleBar() {
   const linksAreDisabled = location.pathname.includes('app-old-version')
   const isImageViewer = isInImageViewerPath(location.pathname)
   const title = location.search.title || 'Ganymède'
+  const isOverlayMode = conf.data?.overlayMode ?? false
 
   return (
-    <div className="pointer-events-auto sticky top-0 z-60 flex h-titlebar items-center bg-surface-inset text-primary-foreground">
+    <div
+      className={cn(
+        'pointer-events-auto sticky top-0 z-60 flex h-titlebar items-center bg-surface-inset text-primary-foreground',
+        isOverlayMode && 'w-fit rounded-br-md shadow-md',
+      )}
+      data-overlay-interactive="true"
+    >
       {!linksAreDisabled && !isImageViewer && (
         <DropdownMenu>
           <DropdownMenuTrigger className="h-full px-2 outline-hidden" disabled={isBodyLocked}>
@@ -164,11 +172,15 @@ export function TitleBar() {
           </DropdownMenuContent>
         </DropdownMenu>
       )}
-      <p className="center-absolute cursor-default text-center text-sm font-semibold select-none sm:text-base">
-        {title}
-      </p>
-      <p className="relative z-10 size-full grow" data-tauri-drag-region="" />
-      <div className="flex h-full justify-end">
+      {!isOverlayMode && (
+        <>
+          <p className="center-absolute cursor-default text-center text-sm font-semibold select-none sm:text-base">
+            {title}
+          </p>
+          <p className="relative z-10 size-full grow" data-tauri-drag-region="" />
+        </>
+      )}
+      <div className={cn('flex h-full justify-end', !isOverlayMode && 'ml-auto')}>
         {!linksAreDisabled && !isImageViewer && (
           <Link
             className="inline-flex h-titlebar w-6 items-center justify-center hover:bg-surface-card aria-disabled:pointer-events-none xs:w-titlebar"
@@ -186,26 +198,30 @@ export function TitleBar() {
             <SettingsIcon className="size-4" />
           </Link>
         )}
-        <button
-          className="inline-flex h-titlebar w-6 items-center justify-center hover:bg-surface-card xs:w-titlebar"
-          id="titlebar-minimize"
-          onClick={async () => {
-            await appWindow.minimize()
-          }}
-          title={t`Réduire`}
-        >
-          <MinusIcon className="size-4" />
-        </button>
-        <button
-          className="inline-flex h-titlebar w-6 items-center justify-center hover:bg-destructive xs:w-titlebar"
-          id="titlebar-close"
-          onClick={async () => {
-            await appWindow.close()
-          }}
-          title={t`Fermer`}
-        >
-          <XIcon className="size-4" />
-        </button>
+        {!isOverlayMode && (
+          <>
+            <button
+              className="inline-flex h-titlebar w-6 items-center justify-center hover:bg-surface-card xs:w-titlebar"
+              id="titlebar-minimize"
+              onClick={async () => {
+                await appWindow.minimize()
+              }}
+              title={t`Réduire`}
+            >
+              <MinusIcon className="size-4" />
+            </button>
+            <button
+              className="inline-flex h-titlebar w-6 items-center justify-center hover:bg-destructive xs:w-titlebar"
+              id="titlebar-close"
+              onClick={async () => {
+                await appWindow.close()
+              }}
+              title={t`Fermer`}
+            >
+              <XIcon className="size-4" />
+            </button>
+          </>
+        )}
       </div>
     </div>
   )

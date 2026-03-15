@@ -30,10 +30,18 @@ type GuideTabsTriggerProps = {
   currentId: number
   dropPosition: OpenedGuideDropPosition | null
   isDragging: boolean
+  isOverlayMode: boolean
   onTabPointerDown: (evt: ReactPointerEvent<HTMLDivElement>, id: number) => void
 }
 
-export function GuideTabsTrigger({ id, currentId, dropPosition, isDragging, onTabPointerDown }: GuideTabsTriggerProps) {
+export function GuideTabsTrigger({
+  id,
+  currentId,
+  dropPosition,
+  isDragging,
+  isOverlayMode,
+  onTabPointerDown,
+}: GuideTabsTriggerProps) {
   const guide = useGuideOrUndefined(id)
   const removeTab = useTabs((s) => s.removeTab)
   const setTabs = useTabs((s) => s.setTabs)
@@ -179,6 +187,7 @@ export function GuideTabsTrigger({ id, currentId, dropPosition, isDragging, onTa
               <div
                 className={cn(
                   'relative flex shrink-0 cursor-grab pb-1 active:cursor-grabbing',
+                  isOverlayMode && 'w-full px-0 pb-0',
                   isDragging && 'opacity-60',
                 )}
                 data-guide-id={id}
@@ -190,6 +199,9 @@ export function GuideTabsTrigger({ id, currentId, dropPosition, isDragging, onTa
                     className={cn(
                       'pointer-events-none absolute top-0 bottom-1 z-10 w-0.5 rounded-full bg-primary',
                       dropPosition === 'before' ? 'left-0' : 'right-0',
+                      isOverlayMode &&
+                        'right-0 left-0 h-0.5 w-auto rounded-full ' +
+                          (dropPosition === 'before' ? 'top-0 bottom-auto' : 'top-auto bottom-0'),
                     )}
                   />
                 )}
@@ -198,6 +210,7 @@ export function GuideTabsTrigger({ id, currentId, dropPosition, isDragging, onTa
                   className={cn(
                     'group/tab relative m-0 flex max-w-40 items-center gap-1.5 overflow-hidden rounded-lg bg-surface-inset text-xs font-medium whitespace-nowrap text-foreground/75 transition-none data-[state=active]:bg-surface-page data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-surface-page/50',
                     !isSmallGuide && 'xs:text-sm lg:max-w-62',
+                    isOverlayMode && 'h-12 w-full max-w-none justify-center rounded-md px-0 py-0',
                   )}
                   onClick={async (evt) => {
                     evt.preventDefault()
@@ -213,20 +226,28 @@ export function GuideTabsTrigger({ id, currentId, dropPosition, isDragging, onTa
                   }}
                   value={id.toString()}
                 >
-                  <div draggable={false}>
+                  <div className={cn(isOverlayMode && 'flex w-full items-center justify-center')} draggable={false}>
                     <GuideNodeImage guide={guide} />
                     <span
-                      className={cn('hidden -translate-y-0.5 truncate', !isSmallGuide && 'xs:inline')}
+                      className={cn('hidden -translate-y-0.5 truncate', !isSmallGuide && 'xs:inline', isOverlayMode && 'hidden')}
                       draggable={false}
                     >
                       {guide.name}
                     </span>
-                    {/* Progress bar */}
-                    <div className="absolute bottom-0 left-0 h-0.5 w-full">
+                    <div
+                      className={cn(
+                        'absolute bottom-0 left-0 h-0.5 w-full',
+                        isOverlayMode && 'top-0 right-0 left-auto h-full w-0.5',
+                      )}
+                    >
                       <div className="size-full bg-black/20">
                         <div
-                          className="h-full rounded-b-xl bg-success"
-                          style={{ width: `${Math.min(progressPercent, 100)}%` }}
+                          className={cn('h-full rounded-b-xl bg-success', isOverlayMode && 'rounded-r-xl rounded-b-none')}
+                          style={
+                            isOverlayMode
+                              ? { height: `${Math.min(progressPercent, 100)}%` }
+                              : { width: `${Math.min(progressPercent, 100)}%` }
+                          }
                         />
                       </div>
                     </div>
@@ -235,6 +256,8 @@ export function GuideTabsTrigger({ id, currentId, dropPosition, isDragging, onTa
                         'group/close invisible absolute top-0 right-0 z-0 cursor-pointer bg-surface-page text-primary-foreground transition-none group-hover/tab:visible',
                         !isSmallGuide &&
                           'xs:top-0 xs:bottom-0.5 xs:flex xs:h-[calc(100%-0.125rem)] xs:w-6 xs:items-center xs:justify-end xs:pr-1.5 xs:mask-gradient-to-left',
+                        isOverlayMode &&
+                          'top-auto right-auto -bottom-1 left-1/2 flex h-4 w-4 -translate-x-1/2 items-center justify-center rounded-full bg-surface-page p-0 opacity-0 group-hover/tab:opacity-100',
                       )}
                       data-no-tab-drag="true"
                       draggable={false}
@@ -249,6 +272,7 @@ export function GuideTabsTrigger({ id, currentId, dropPosition, isDragging, onTa
                         className={cn(
                           'size-3 rounded-full p-0.5',
                           !isSmallGuide && 'xs:group-hover/close:bg-surface-inset',
+                          isOverlayMode && 'p-0',
                         )}
                       />
                     </button>
@@ -273,7 +297,7 @@ export function GuideTabsTrigger({ id, currentId, dropPosition, isDragging, onTa
             </ContextMenuItem>
           </ContextMenuContent>
         </ContextMenu>
-        <TooltipContent className="xl:hidden" side="bottom">
+        <TooltipContent className={cn('xl:hidden', isOverlayMode && 'block')} side={isOverlayMode ? 'right' : 'bottom'}>
           {guide.name}
         </TooltipContent>
       </Tooltip>
