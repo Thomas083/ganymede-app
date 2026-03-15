@@ -16,12 +16,14 @@ export function StepProgress({
   onPrevious,
   onNext,
   onChangeStep,
+  compact = false,
 }: {
   currentIndex: number
   maxIndex: number
   onPrevious: () => Promise<boolean>
   onNext: () => Promise<boolean>
   onChangeStep: (index: number) => Promise<void>
+  compact?: boolean
 }) {
   const { t } = useLingui()
   const { data: conf } = useSuspenseQuery(confQuery)
@@ -58,7 +60,7 @@ export function StepProgress({
       if (indexToSet !== currentIndex) {
         await onChangeStep(indexToSet)
       }
-      setScrubbingIndex((current) => (current === indexToSet ? null : current))
+      setScrubbingIndex((currentIndexValue) => (currentIndexValue === indexToSet ? null : currentIndexValue))
     }
   }
 
@@ -74,16 +76,16 @@ export function StepProgress({
   useWebviewEvent('go-to-next-guide-step', () => void onNext(), [currentIndex])
 
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-1" onWheel={handleWheel}>
+    <div className={cn('flex min-w-0 flex-1 items-center gap-1', compact && 'gap-0.5')} onWheel={handleWheel}>
       <ShortcutTooltip description={t`Précédent`} shortcut={conf.shortcuts?.goPreviousStep}>
         <Button
-          className="size-6 shrink-0 opacity-60 hover:opacity-100"
+          className={cn('size-6 shrink-0 opacity-60 hover:opacity-100', compact && 'size-5')}
           disabled={currentIndex === 0}
           onClick={onPrevious}
           size="icon"
           variant="ghost"
         >
-          <ChevronLeftIcon className="size-3!" />
+          <ChevronLeftIcon className={cn('size-3!', compact && 'size-2.5!')} />
         </Button>
       </ShortcutTooltip>
 
@@ -93,6 +95,7 @@ export function StepProgress({
             <div
               className={cn(
                 'relative flex h-5 min-w-0 flex-1 cursor-pointer touch-none items-center justify-center overflow-hidden rounded-[6px] bg-surface-inset',
+                compact && 'h-4 rounded-[5px]',
               )}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
@@ -101,12 +104,11 @@ export function StepProgress({
               <div
                 className={cn(
                   'absolute inset-y-0 left-0 bg-[#6ABC65]/80',
-                  // Disable transition during scrubbing for instant feedback
                   scrubbingIndex === null && 'transition-all duration-300',
                 )}
                 style={{ width: `${(current / total) * 100}%` }}
               />
-              <span className="relative z-10 text-xs font-medium text-white drop-shadow select-none">
+              <span className={cn('relative z-10 text-xs font-medium text-white drop-shadow select-none', compact && 'text-[10px]')}>
                 {current}/{total}
               </span>
             </div>
@@ -119,13 +121,13 @@ export function StepProgress({
 
       <ShortcutTooltip description={t`Suivant`} shortcut={conf.shortcuts?.goNextStep}>
         <Button
-          className="size-6 shrink-0 opacity-60 hover:opacity-100"
+          className={cn('size-6 shrink-0 opacity-60 hover:opacity-100', compact && 'size-5')}
           disabled={currentIndex === maxIndex}
           onClick={onNext}
           size="icon"
           variant="ghost"
         >
-          <ChevronRightIcon className="size-3!" />
+          <ChevronRightIcon className={cn('size-3!', compact && 'size-2.5!')} />
         </Button>
       </ShortcutTooltip>
     </div>

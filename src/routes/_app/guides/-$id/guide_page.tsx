@@ -44,6 +44,8 @@ export function GuidePage({ id, stepIndex: index }: { id: number; stepIndex: num
   const conf = useSuspenseQuery(confQuery)
   const setConf = useSetConf()
   const navigate = useNavigate()
+  const isOverlayMode = conf.data.overlayMode ?? false
+  const overlaySidebarWidth = isOverlayMode ? 56 : 0
   const [noteOpen, setNoteOpen] = useState(false)
   const [noteStepIndex, setNoteStepIndex] = useState(index)
   const [guideNotesOpen, setGuideNotesOpen] = useState(false)
@@ -175,27 +177,33 @@ export function GuidePage({ id, stepIndex: index }: { id: number; stepIndex: num
 
   return (
     <div
-      className="scroller mt-[40px] flex h-[calc(100vh-var(--spacing-titlebar)-40px-40px)] flex-col overflow-x-hidden overflow-y-scroll pb-2"
+      className={cn(
+        'scroller mt-[40px] flex h-[calc(100vh-var(--spacing-titlebar)-40px-40px)] flex-col overflow-x-hidden overflow-y-scroll pb-2',
+        isOverlayMode && 'ml-0',
+      )}
       ref={scrollableRef}
       style={{ backgroundColor: bgColor }}
     >
       <header
-        className={cn('fixed inset-x-0 top-[70px] z-10', !isSmallGuide && 'sm:top-[66px]')}
-        style={{ backgroundColor: bgColor }}
+        className={cn('fixed top-[70px] z-10', !isSmallGuide && 'sm:top-[66px]')}
+        style={{
+          backgroundColor: bgColor,
+          left: isOverlayMode ? `${overlaySidebarWidth}px` : 0,
+          right: 0,
+        }}
       >
-        <div className="flex h-10 items-center p-1">
+        <div className={cn('flex h-10 items-center p-1', isOverlayMode && 'mx-auto w-[80%] min-w-0')}>
           {step && (
             <>
-              {/* Left Side - Fixed width to maintain center balance */}
-              <div className="flex w-16 shrink-0 items-center justify-start pl-1">
+              <div className={cn('flex w-16 shrink-0 items-center justify-start pl-1', isOverlayMode && 'w-10 pl-0')}>
                 {step.map !== null && step.map.toLowerCase() !== 'nomap' && (
                   <Position pos_x={step.pos_x} pos_y={step.pos_y} />
                 )}
               </div>
 
-              {/* Center - Progress Bar */}
               <div className="flex flex-1 items-center justify-center">
                 <StepProgress
+                  compact={isOverlayMode}
                   currentIndex={index}
                   key={`${guide.id}-${index}`}
                   maxIndex={stepMax}
@@ -205,16 +213,22 @@ export function GuidePage({ id, stepIndex: index }: { id: number; stepIndex: num
                 />
               </div>
 
-              {/* Right Side - Fixed width to maintain center balance */}
-              <div className="hidden w-20 shrink-0 items-center justify-end pr-1 xs:flex sm:w-24">
+              <div
+                className={cn(
+                  'hidden w-20 shrink-0 items-center justify-end pr-1 xs:flex sm:w-24',
+                  isOverlayMode && 'w-10 gap-0.5 pr-0 sm:w-10',
+                )}
+              >
                 <GuideNotesMenuTrigger
                   guideId={guide.id}
                   onOpenGuideNotes={() => setGuideNotesOpen(true)}
                   onOpenNote={handleOpenNote}
                   stepIndex={index}
                 />
-                {showSummary && <SummaryDialogTrigger onClick={() => setSummaryOpen(true)} />}
-                {showReport && <ReportDialogTrigger onClick={() => setReportOpen(true)} />}
+                {showSummary && (
+                  <SummaryDialogTrigger compact={isOverlayMode} onClick={() => setSummaryOpen(true)} />
+                )}
+                {showReport && <ReportDialogTrigger compact={isOverlayMode} onClick={() => setReportOpen(true)} />}
               </div>
               <div className="flex w-fit shrink-0 items-center justify-end pr-1 xs:hidden">
                 <GuideActionsDropdown
@@ -256,6 +270,7 @@ export function GuidePage({ id, stepIndex: index }: { id: number; stepIndex: num
           className={cn(
             'guide px-2 pt-2 leading-5',
             !isSmallGuide && 'xs:px-3 xs:pt-3 sm:px-4 sm:pt-4',
+            isOverlayMode && 'pl-3 xs:pl-4 sm:pl-5',
             conf.data.fontSize === 'ExtraSmall' && 'text-xs',
             conf.data.fontSize === 'Small' && 'text-sm leading-4',
             conf.data.fontSize === 'Large' && 'text-md leading-5',

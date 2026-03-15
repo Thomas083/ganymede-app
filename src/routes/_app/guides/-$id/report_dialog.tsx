@@ -22,12 +22,12 @@ import { Textarea } from '@/components/ui/textarea.tsx'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip.tsx'
 import { useSendReport } from '@/mutations/send_report.mutation.ts'
 
-export function ReportDialogTrigger({ onClick }: { onClick: () => void }) {
+export function ReportDialogTrigger({ compact = false, onClick }: { compact?: boolean; onClick: () => void }) {
   return (
     <TooltipProvider delayDuration={400}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button className="size-6 sm:size-8" onClick={onClick} size="icon" variant="ghost">
+          <Button className={compact ? 'size-5' : 'size-6 sm:size-8'} onClick={onClick} size="icon" variant="ghost">
             <BugIcon />
           </Button>
         </TooltipTrigger>

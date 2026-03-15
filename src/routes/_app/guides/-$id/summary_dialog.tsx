@@ -18,12 +18,12 @@ import { GANYMEDE_HOST } from '@/lib/api.ts'
 import { rankList } from '@/lib/rank.ts'
 import { summaryQuery } from '@/queries/summary.query.ts'
 
-export function SummaryDialogTrigger({ onClick }: { onClick: () => void }) {
+export function SummaryDialogTrigger({ compact = false, onClick }: { compact?: boolean; onClick: () => void }) {
   return (
     <TooltipProvider>
       <Tooltip delayDuration={400}>
         <TooltipTrigger asChild>
-          <Button className="size-6 sm:size-8" onClick={onClick} size="icon" variant="ghost">
+          <Button className={compact ? 'size-5' : 'size-6 sm:size-8'} onClick={onClick} size="icon" variant="ghost">
             <BookTextIcon />
           </Button>
         </TooltipTrigger>
