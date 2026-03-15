@@ -210,7 +210,7 @@ export function GuideTabsTrigger({
                   className={cn(
                     'group/tab relative m-0 flex max-w-40 items-center gap-1.5 overflow-hidden rounded-lg bg-surface-inset text-xs font-medium whitespace-nowrap text-foreground/75 transition-none data-[state=active]:bg-surface-page data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-surface-page/50',
                     !isSmallGuide && 'xs:text-sm lg:max-w-62',
-                    isOverlayMode && 'h-12 w-full max-w-none justify-center rounded-md px-0 py-0',
+                    isOverlayMode && 'h-12 w-full max-w-none justify-start rounded-md px-2 py-0',
                   )}
                   onClick={async (evt) => {
                     evt.preventDefault()
@@ -226,10 +226,15 @@ export function GuideTabsTrigger({
                   }}
                   value={id.toString()}
                 >
-                  <div className={cn(isOverlayMode && 'flex w-full items-center justify-center')} draggable={false}>
+                  <div className={cn(isOverlayMode && 'flex w-full min-w-0 items-center gap-2')} draggable={false}>
                     <GuideNodeImage guide={guide} />
                     <span
-                      className={cn('hidden -translate-y-0.5 truncate', !isSmallGuide && 'xs:inline', isOverlayMode && 'hidden')}
+                      className={cn(
+                        'hidden -translate-y-0.5 truncate',
+                        !isSmallGuide && 'xs:inline',
+                        isOverlayMode &&
+                          'inline max-w-0 flex-1 opacity-0 transition-[max-width,opacity] duration-150 group-hover/overlay-tabs:max-w-[9rem] group-hover/overlay-tabs:opacity-100 group-data-[state=active]/tab:max-w-[9rem] group-data-[state=active]/tab:opacity-100',
+                      )}
                       draggable={false}
                     >
                       {guide.name}
@@ -251,31 +256,44 @@ export function GuideTabsTrigger({
                         />
                       </div>
                     </div>
-                    <button
-                      className={cn(
-                        'group/close invisible absolute top-0 right-0 z-0 cursor-pointer bg-surface-page text-primary-foreground transition-none group-hover/tab:visible',
-                        !isSmallGuide &&
-                          'xs:top-0 xs:bottom-0.5 xs:flex xs:h-[calc(100%-0.125rem)] xs:w-6 xs:items-center xs:justify-end xs:pr-1.5 xs:mask-gradient-to-left',
-                        isOverlayMode &&
-                          'top-auto right-auto -bottom-1 left-1/2 flex h-4 w-4 -translate-x-1/2 items-center justify-center rounded-full bg-surface-page p-0 opacity-0 group-hover/tab:opacity-100',
-                      )}
-                      data-no-tab-drag="true"
-                      draggable={false}
-                      onClick={async (evt) => {
-                        evt.preventDefault()
-                        evt.stopPropagation()
+                    {isOverlayMode ? (
+                      <button
+                        className="ml-auto inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-surface-card p-0 opacity-0 transition-opacity duration-150 group-hover/overlay-tabs:opacity-100 group-data-[state=active]/tab:opacity-100"
+                        data-no-tab-drag="true"
+                        draggable={false}
+                        onClick={async (evt) => {
+                          evt.preventDefault()
+                          evt.stopPropagation()
 
-                        await onCloseTab()
-                      }}
-                    >
-                      <XIcon
+                          await onCloseTab()
+                        }}
+                      >
+                        <XIcon className="size-3" />
+                      </button>
+                    ) : (
+                      <button
                         className={cn(
-                          'size-3 rounded-full p-0.5',
-                          !isSmallGuide && 'xs:group-hover/close:bg-surface-inset',
-                          isOverlayMode && 'p-0',
+                          'group/close invisible absolute top-0 right-0 z-0 cursor-pointer bg-surface-page text-primary-foreground transition-none group-hover/tab:visible',
+                          !isSmallGuide &&
+                            'xs:top-0 xs:bottom-0.5 xs:flex xs:h-[calc(100%-0.125rem)] xs:w-6 xs:items-center xs:justify-end xs:pr-1.5 xs:mask-gradient-to-left',
                         )}
-                      />
-                    </button>
+                        data-no-tab-drag="true"
+                        draggable={false}
+                        onClick={async (evt) => {
+                          evt.preventDefault()
+                          evt.stopPropagation()
+
+                          await onCloseTab()
+                        }}
+                      >
+                        <XIcon
+                          className={cn(
+                            'size-3 rounded-full p-0.5',
+                            !isSmallGuide && 'xs:group-hover/close:bg-surface-inset',
+                          )}
+                        />
+                      </button>
+                    )}
                   </div>
                 </TabsTrigger>
               </div>
@@ -297,7 +315,7 @@ export function GuideTabsTrigger({
             </ContextMenuItem>
           </ContextMenuContent>
         </ContextMenu>
-        <TooltipContent className={cn('xl:hidden', isOverlayMode && 'block')} side={isOverlayMode ? 'right' : 'bottom'}>
+        <TooltipContent className={cn('xl:hidden', isOverlayMode && 'hidden')} side={isOverlayMode ? 'right' : 'bottom'}>
           {guide.name}
         </TooltipContent>
       </Tooltip>

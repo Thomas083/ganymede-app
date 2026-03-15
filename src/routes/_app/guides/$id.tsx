@@ -544,8 +544,10 @@ function GuideIdPage() {
           <div
             className={cn(
               'flex w-full bg-surface-card text-primary-foreground-800',
-              isOverlayMode && 'w-14 shrink-0 flex-col border-r border-border-muted',
+              isOverlayMode &&
+                'group/overlay-tabs w-14 shrink-0 flex-col border-r border-border-muted transition-[width] duration-150 hover:w-56',
             )}
+            data-overlay-interactive="true"
           >
             <TabsList
               className={cn(
