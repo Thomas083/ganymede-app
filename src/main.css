@@ -573,6 +573,17 @@
   :root[data-overlay-edit-mode="true"] [role="button"]:not([data-overlay-edit-allow="true"]) {
     pointer-events: none !important;
   }
+
+  :root[data-overlay-edit-mode="true"] [data-overlay-editable="true"] *:not([data-overlay-edit-allow="true"]):not(
+      [data-overlay-resize-handle="true"]
+    ) {
+    pointer-events: none !important;
+  }
+
+  :root[data-overlay-edit-mode="true"] [data-overlay-edit-allow="true"],
+  :root[data-overlay-edit-mode="true"] [data-overlay-resize-handle="true"] {
+    pointer-events: auto !important;
+  }
 }
 
 .toaster[data-sonner-toaster][data-sonner-theme='dark'] {
