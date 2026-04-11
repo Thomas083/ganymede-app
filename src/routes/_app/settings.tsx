@@ -450,6 +450,26 @@ function Settings() {
                 }}
                 value={conf.data.shortcuts?.copyCurrentStep}
               />
+              <ShortcutInput
+                id="toggle-visibility"
+                label={t`Afficher / masquer GanymÃ¨de`}
+                onChange={async (value) => {
+                  try {
+                    await setConf.mutateAsync({
+                      ...conf.data,
+                      shortcuts: {
+                        ...conf.data.shortcuts,
+                        toggleVisibility: value,
+                      },
+                    })
+                    await reregisterShortcuts.mutateAsync()
+                    toast.success(t`Raccourci mis Ã  jour`)
+                  } catch {
+                    toast.error(t`Erreur lors de la mise Ã  jour du raccourci`)
+                  }
+                }}
+                value={conf.data.shortcuts?.toggleVisibility}
+              />
             </SettingCardSection>
           </SettingCard>
           <SettingCard id="section-profiles-card" title={<Trans>Profils</Trans>}>

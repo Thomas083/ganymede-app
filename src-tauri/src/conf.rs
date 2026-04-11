@@ -83,6 +83,10 @@ fn default_copy_current_step_shortcut() -> String {
     "CommandOrControl+Shift+C".to_string()
 }
 
+fn default_toggle_visibility_shortcut() -> String {
+    "CommandOrControl+Shift+H".to_string()
+}
+
 // Enums
 
 #[derive(Debug, Serialize, thiserror::Error, taurpc::specta::Type)]
@@ -159,6 +163,8 @@ pub struct Shortcuts {
     pub go_previous_step: String,
     #[serde(default = "default_copy_current_step_shortcut")]
     pub copy_current_step: String,
+    #[serde(default = "default_toggle_visibility_shortcut")]
+    pub toggle_visibility: String,
 }
 
 #[derive(Debug)]
@@ -399,6 +405,7 @@ impl Default for Shortcuts {
             go_next_step: default_go_next_step_shortcut(),
             go_previous_step: default_go_previous_step_shortcut(),
             copy_current_step: default_copy_current_step_shortcut(),
+            toggle_visibility: default_toggle_visibility_shortcut(),
         }
     }
 }

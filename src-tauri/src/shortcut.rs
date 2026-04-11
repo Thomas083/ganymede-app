@@ -51,6 +51,10 @@ pub fn handle_shortcuts(app: &App) -> Result<(), Error> {
         &conf.shortcuts.copy_current_step,
         "CommandOrControl+Shift+C",
     )?;
+    let toggle_visibility_shortcut = parse_shortcut_or_default(
+        &conf.shortcuts.toggle_visibility,
+        "CommandOrControl+Shift+H",
+    )?;
 
     let cache = ShortcutsCache(Arc::new(Mutex::new(conf.shortcuts.clone())));
     app.manage(cache.clone());
@@ -127,6 +131,16 @@ pub fn handle_shortcuts(app: &App) -> Result<(), Error> {
                                 );
                                 Shortcut::from_str("CommandOrControl+Shift+C")
                             });
+                            let toggle_visibility_sc = Shortcut::from_str(
+                                &cached_shortcuts.toggle_visibility,
+                            )
+                            .or_else(|e| {
+                                error!(
+                                    "[Shortcut] invalid toggle_visibility: {:?}, using default",
+                                    e
+                                );
+                                Shortcut::from_str("CommandOrControl+Shift+H")
+                            });
 
                             drop(cached_shortcuts);
 
@@ -135,13 +149,15 @@ pub fn handle_shortcuts(app: &App) -> Result<(), Error> {
                                 go_next_step_sc,
                                 go_previous_step_sc,
                                 copy_current_step_sc,
+                                toggle_visibility_sc,
                             ) = match (
                                 reset_conf_sc,
                                 go_next_step_sc,
                                 go_previous_step_sc,
                                 copy_current_step_sc,
+                                toggle_visibility_sc,
                             ) {
-                                (Ok(r), Ok(n), Ok(p), Ok(c)) => (r, n, p, c),
+                                (Ok(r), Ok(n), Ok(p), Ok(c), Ok(v)) => (r, n, p, c, v),
                                 _ => {
                                     error!("[Shortcut] failed to parse shortcuts, skipping event");
                                     return;
@@ -181,6 +197,30 @@ pub fn handle_shortcuts(app: &App) -> Result<(), Error> {
                                 trigger
                                     .copy_current_guide_step::<Wry>()
                                     .expect("[Shortcut] failed to copy current step");
+                            } else if shortcut == &toggle_visibility_sc {
+                                info!("Shortcut {} pressed", shortcut.to_string());
+                                if let Some(window) = app_handle.get_webview_window("main") {
+                                    match window.is_visible() {
+                                        Ok(true) => {
+                                            if let Err(err) = window.hide() {
+                                                error!("[Shortcut] failed to hide window: {}", err);
+                                            }
+                                        }
+                                        Ok(false) => {
+                                            if let Err(err) = window.show() {
+                                                error!("[Shortcut] failed to show window: {}", err);
+                                            } else if let Err(err) = window.set_focus() {
+                                                error!("[Shortcut] failed to focus window: {}", err);
+                                            }
+                                        }
+                                        Err(err) => {
+                                            error!(
+                                                "[Shortcut] failed to read window visibility: {}",
+                                                err
+                                            );
+                                        }
+                                    }
+                                }
                             }
                         }
                         _ => {}
@@ -243,10 +283,25 @@ pub fn handle_shortcuts(app: &App) -> Result<(), Error> {
         );
     }
 
+    let toggle_visibility_register = app
+        .global_shortcut()
+        .register(toggle_visibility_shortcut)
+        .map_err(|e| Error::Register(e.to_string()));
+
+    if let Err(err) = &toggle_visibility_register {
+        error!("[Shortcut]: {:?}", err);
+    } else {
+        info!(
+            "[Shortcut] registered: {}",
+            toggle_visibility_shortcut.to_string()
+        );
+    }
+
     reset_register
         .and(go_next_step_register)
         .and(go_previous_step_register)
-        .and(copy_current_step_register)?;
+        .and(copy_current_step_register)
+        .and(toggle_visibility_register)?;
 
     Ok(())
 }
@@ -267,6 +322,10 @@ pub fn reregister_shortcuts<R: Runtime>(app: &AppHandle<R>) -> Result<(), Error>
         parse_shortcut_or_default(
             &conf.shortcuts.copy_current_step,
             "CommandOrControl+Shift+C",
+        )?,
+        parse_shortcut_or_default(
+            &conf.shortcuts.toggle_visibility,
+            "CommandOrControl+Shift+H",
         )?,
     ];
 

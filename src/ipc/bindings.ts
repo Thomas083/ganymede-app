@@ -108,7 +108,7 @@ export type ReportPayload = { username: string | null; content: string; step: nu
 
 export type ShortcutError = { Register: string } | { RegisterPlugin: string } | { ParseShortcut: string } | { GetConf: ConfError } | { Unregister: string }
 
-export type Shortcuts = { resetConf?: string; goNextStep?: string; goPreviousStep?: string; copyCurrentStep?: string }
+export type Shortcuts = { resetConf?: string; goNextStep?: string; goPreviousStep?: string; copyCurrentStep?: string; toggleVisibility?: string }
 
 export type Status = "draft" | "public" | "private" | "certified" | "gp"
 
