@@ -53,16 +53,7 @@ function Root() {
   }, [conf.data])
 
   useEffect(() => {
-    const syncOverlayVisible = () => {
-      window.document.documentElement.dataset.overlayVisible = window.document.visibilityState === 'visible' ? 'true' : 'false'
-    }
-
-    syncOverlayVisible()
-    window.document.addEventListener('visibilitychange', syncOverlayVisible)
-
-    return () => {
-      window.document.removeEventListener('visibilitychange', syncOverlayVisible)
-    }
+    window.document.documentElement.dataset.overlayVisible = 'true'
   }, [])
 
   return (

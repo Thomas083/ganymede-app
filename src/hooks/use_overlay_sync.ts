@@ -1,14 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
 import { useLocation } from '@tanstack/react-router'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { error } from '@tauri-apps/plugin-log'
 import { InteractiveRegion } from '@/ipc/bindings.ts'
+import { useWebviewEvent } from '@/hooks/use_webview_event.ts'
 import { setInteractiveRegions } from '@/ipc/overlay.ts'
 import { isOverlayEditModeEnabled } from '@/lib/overlay_layout.ts'
 import { confQuery } from '@/queries/conf.query.ts'
 
 const OVERLAY_INTERACTIVE_SELECTOR = [
   '[data-overlay-interactive="true"]',
+  '.overlay-clickable',
   'button:not([disabled])',
   'a[href]',
   'input:not([type="hidden"]):not([disabled])',
@@ -66,11 +68,15 @@ function getFullWindowInteractiveRegion(): InteractiveRegion[] {
 export function useOverlaySync() {
   const conf = useQuery(confQuery)
   const location = useLocation()
+  const [isOverlayVisible, setIsOverlayVisible] = useState(true)
   const isSettingsRoute = location.pathname === '/settings'
   const isOverlayEditMode = conf.data ? isOverlayEditModeEnabled(conf.data) : false
+  useWebviewEvent('overlay-visibility-changed', (event) => {
+    setIsOverlayVisible(Boolean(event.payload))
+  })
 
   useEffect(() => {
-    if (!conf.data?.overlayMode) {
+    if (!conf.data?.overlayMode || !isOverlayVisible) {
       setInteractiveRegions([]).then((result) => {
         if (result.isErr()) {
           error(`Failed to clear overlay regions: ${String(result.error.cause)}`)
@@ -133,5 +139,5 @@ export function useOverlaySync() {
       window.removeEventListener('scroll', scheduleSync, true)
       window.removeEventListener('pointermove', scheduleSync, true)
     }
-  }, [conf.data?.overlayMode, isSettingsRoute, isOverlayEditMode])
+  }, [conf.data?.overlayMode, isSettingsRoute, isOverlayEditMode, isOverlayVisible])
 }

@@ -1,9 +1,11 @@
 use std::sync::Mutex;
 
 use log::error;
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Emitter, Manager, Runtime};
 
 use crate::conf::Conf;
+use crate::event::Event;
+use crate::overlay::OverlayManager;
 
 #[derive(Debug, Default)]
 struct VisibilityState {
@@ -24,13 +26,27 @@ impl VisibilityController {
 
         if let Some(window) = app.get_webview_window("main") {
             if hidden {
+                app.state::<OverlayManager>()
+                    .set_interactive_regions(vec![]);
+                let _ = window.set_ignore_cursor_events(true);
+
                 if let Err(err) = window.hide() {
                     error!("[Visibility] failed to hide window manually: {}", err);
                 }
-            } else if let Err(err) = window.show() {
-                error!("[Visibility] failed to show window manually: {}", err);
-            } else if let Err(err) = window.set_focus() {
-                error!("[Visibility] failed to focus window manually: {}", err);
+                let _ = app.emit(Event::OverlayVisibilityChanged.into(), false);
+            } else {
+                let _ = window.set_ignore_cursor_events(true);
+
+                if let Err(err) = window.show() {
+                    error!("[Visibility] failed to show window manually: {}", err);
+                    return;
+                }
+
+                let _ = app.emit(Event::OverlayVisibilityChanged.into(), true);
+
+                if let Err(err) = window.set_focus() {
+                    error!("[Visibility] failed to focus window manually: {}", err);
+                }
             }
         }
     }
