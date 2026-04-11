@@ -206,11 +206,19 @@ pub fn handle_shortcuts(app: &App) -> Result<(), Error> {
                                             app_handle
                                                 .state::<VisibilityController>()
                                                 .set_manual_hidden(&app_handle, true);
+                                            let _ = app_handle.emit(
+                                                Event::OverlayVisibilityChanged.into(),
+                                                false,
+                                            );
                                         }
                                         Ok(false) => {
                                             app_handle
                                                 .state::<VisibilityController>()
                                                 .set_manual_hidden(&app_handle, false);
+                                            let _ = app_handle.emit(
+                                                Event::OverlayVisibilityChanged.into(),
+                                                true,
+                                            );
                                         }
                                         Err(err) => {
                                             error!(

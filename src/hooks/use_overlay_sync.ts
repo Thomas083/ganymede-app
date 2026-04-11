@@ -116,6 +116,7 @@ export function useOverlaySync() {
     resizeObserver.observe(document.body)
     window.addEventListener('resize', scheduleSync)
     window.addEventListener('scroll', scheduleSync, true)
+    window.addEventListener('pointermove', scheduleSync, true)
 
     scheduleSync()
 
@@ -130,6 +131,7 @@ export function useOverlaySync() {
       resizeObserver.disconnect()
       window.removeEventListener('resize', scheduleSync)
       window.removeEventListener('scroll', scheduleSync, true)
+      window.removeEventListener('pointermove', scheduleSync, true)
     }
   }, [conf.data?.overlayMode, isSettingsRoute, isOverlayEditMode])
 }

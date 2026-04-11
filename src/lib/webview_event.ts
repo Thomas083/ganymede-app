@@ -4,6 +4,7 @@ export type AvailableEvent =
   | 'go-to-next-guide-step'
   | 'go-to-previous-guide-step'
   | 'combat-state-changed'
+  | 'overlay-visibility-changed'
   | 'update-started'
   | 'update-finished'
   | 'update-in-progress'
@@ -13,6 +14,7 @@ export type PayloadByEvent = {
   'go-to-next-guide-step': null
   'go-to-previous-guide-step': null
   'combat-state-changed': boolean
+  'overlay-visibility-changed': boolean
   'update-started': null
   'update-finished': null
   'update-in-progress': [number, number | null]

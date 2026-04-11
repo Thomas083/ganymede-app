@@ -11,6 +11,7 @@ import { Toaster } from '@/components/ui/sonner.tsx'
 import { useJwtExpiredHandler } from '@/hooks/use_jwt_expired_handler.ts'
 import { useMalformedGuidesHandler } from '@/hooks/use_malformed_guides_handler.ts'
 import { useOverlaySync } from '@/hooks/use_overlay_sync.ts'
+import { useWebviewEvent } from '@/hooks/use_webview_event.ts'
 import { taurpc } from '@/ipc/ipc.ts'
 import { isInImageViewerPath } from '@/lib/image_viewer.ts'
 import { isOverlayEditModeEnabled } from '@/lib/overlay_layout.ts'
@@ -29,6 +30,9 @@ function Root() {
   const conf = useQuery(confQuery)
   const location = useLocation()
   const isImageViewer = useRef(isInImageViewerPath(location.pathname)) // only check on first mount
+  useWebviewEvent('overlay-visibility-changed', (event) => {
+    window.document.documentElement.dataset.overlayVisible = event.payload ? 'true' : 'false'
+  })
 
   useEffect(() => {
     if (!isImageViewer.current) {
@@ -47,6 +51,19 @@ function Root() {
     const isEditMode = conf.data?.overlayMode && isOverlayEditModeEnabled(conf.data)
     window.document.documentElement.dataset.overlayEditMode = isEditMode ? 'true' : 'false'
   }, [conf.data])
+
+  useEffect(() => {
+    const syncOverlayVisible = () => {
+      window.document.documentElement.dataset.overlayVisible = window.document.visibilityState === 'visible' ? 'true' : 'false'
+    }
+
+    syncOverlayVisible()
+    window.document.addEventListener('visibilitychange', syncOverlayVisible)
+
+    return () => {
+      window.document.removeEventListener('visibilitychange', syncOverlayVisible)
+    }
+  }, [])
 
   return (
     <>

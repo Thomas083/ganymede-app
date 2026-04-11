@@ -1,6 +1,6 @@
 use std::{
     sync::{Arc, Mutex},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use serde::{Deserialize, Serialize};
@@ -28,6 +28,7 @@ pub struct InteractiveRegion {
 struct OverlayState {
     enabled: Mutex<bool>,
     current_click_through: Mutex<bool>,
+    click_through_requested_at: Mutex<Option<Instant>>,
     interactive_regions: Mutex<Vec<InteractiveRegion>>,
     window_hwnd: Mutex<Option<isize>>,
 }
@@ -87,6 +88,8 @@ impl OverlayManager {
 
 #[cfg(windows)]
 fn update_click_through_state<R: Runtime>(app: &AppHandle<R>, state: &OverlayState) {
+    const CLICK_THROUGH_ENABLE_DELAY: Duration = Duration::from_millis(120);
+
     let hwnd_raw = {
         let hwnd = state.window_hwnd.lock().unwrap();
         match *hwnd {
@@ -102,15 +105,40 @@ fn update_click_through_state<R: Runtime>(app: &AppHandle<R>, state: &OverlaySta
         && (interactive_regions.is_empty()
             || is_cursor_in_passthrough_area(hwnd_raw, &interactive_regions));
     let mut current_click_through = state.current_click_through.lock().unwrap();
+    let mut click_through_requested_at = state.click_through_requested_at.lock().unwrap();
 
-    if *current_click_through == should_click_through {
+    // Make click-through activation slightly delayed to avoid rapid toggles when hover-driven
+    // layouts expand/collapse under the cursor. Disabling click-through stays immediate.
+    let effective_click_through = if should_click_through {
+        if *current_click_through {
+            *click_through_requested_at = None;
+            true
+        } else {
+            match *click_through_requested_at {
+                Some(requested_at) if requested_at.elapsed() >= CLICK_THROUGH_ENABLE_DELAY => {
+                    *click_through_requested_at = None;
+                    true
+                }
+                Some(_) => false,
+                None => {
+                    *click_through_requested_at = Some(Instant::now());
+                    false
+                }
+            }
+        }
+    } else {
+        *click_through_requested_at = None;
+        false
+    };
+
+    if *current_click_through == effective_click_through {
         return;
     }
 
     if let Some(window) = app.get_webview_window("main") {
-        let _ = window.set_ignore_cursor_events(should_click_through);
+        let _ = window.set_ignore_cursor_events(effective_click_through);
     }
-    *current_click_through = should_click_through;
+    *current_click_through = effective_click_through;
 }
 
 #[cfg(windows)]

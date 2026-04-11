@@ -584,6 +584,10 @@
   :root[data-overlay-edit-mode="true"] [data-overlay-resize-handle="true"] {
     pointer-events: auto !important;
   }
+
+  :root[data-overlay-visible="false"] * {
+    pointer-events: none !important;
+  }
 }
 
 .toaster[data-sonner-toaster][data-sonner-theme='dark'] {
