@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useLocation } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { error } from '@tauri-apps/plugin-log'
 import { InteractiveRegion } from '@/ipc/bindings.ts'
-import { useWebviewEvent } from '@/hooks/use_webview_event.ts'
 import { setInteractiveRegions } from '@/ipc/overlay.ts'
 import { isOverlayEditModeEnabled } from '@/lib/overlay_layout.ts'
 import { confQuery } from '@/queries/conf.query.ts'
@@ -67,21 +66,11 @@ function getFullWindowInteractiveRegion(): InteractiveRegion[] {
 export function useOverlaySync() {
   const conf = useQuery(confQuery)
   const location = useLocation()
-  const [isInCombat, setIsInCombat] = useState(false)
   const isSettingsRoute = location.pathname === '/settings'
   const isOverlayEditMode = conf.data ? isOverlayEditModeEnabled(conf.data) : false
-  const shouldHideForCombat =
-    !!conf.data?.overlayMode &&
-    !!conf.data?.combatDetectionEnabled &&
-    !!conf.data?.overlayHideInCombat &&
-    isInCombat
-
-  useWebviewEvent('combat-state-changed', (event) => {
-    setIsInCombat(Boolean(event.payload))
-  })
 
   useEffect(() => {
-    if (!conf.data?.overlayMode || shouldHideForCombat) {
+    if (!conf.data?.overlayMode) {
       setInteractiveRegions([]).then((result) => {
         if (result.isErr()) {
           error(`Failed to clear overlay regions: ${String(result.error.cause)}`)
@@ -142,5 +131,5 @@ export function useOverlaySync() {
       window.removeEventListener('resize', scheduleSync)
       window.removeEventListener('scroll', scheduleSync, true)
     }
-  }, [conf.data?.overlayMode, isSettingsRoute, isOverlayEditMode, shouldHideForCombat])
+  }, [conf.data?.overlayMode, isSettingsRoute, isOverlayEditMode])
 }

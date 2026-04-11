@@ -28,10 +28,6 @@ const fn default_overlay_mode() -> bool {
     false
 }
 
-const fn default_overlay_hide_in_combat() -> bool {
-    true
-}
-
 const fn default_combat_detection_enabled() -> bool {
     true
 }
@@ -318,8 +314,6 @@ pub struct Conf {
     pub auto_open_guides: bool,
     #[serde(default = "default_overlay_mode")]
     pub overlay_mode: bool,
-    #[serde(default = "default_overlay_hide_in_combat")]
-    pub overlay_hide_in_combat: bool,
     #[serde(default = "default_combat_detection_enabled")]
     pub combat_detection_enabled: bool,
     #[serde(default = "default_dofus_log_paths")]
@@ -573,7 +567,6 @@ impl Default for Conf {
             opacity: 0.98,
             auto_open_guides: true,
             overlay_mode: false,
-            overlay_hide_in_combat: default_overlay_hide_in_combat(),
             combat_detection_enabled: default_combat_detection_enabled(),
             dofus_log_paths: default_dofus_log_paths(),
             combat_visual_in_combat_ref: vec![],

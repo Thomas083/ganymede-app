@@ -96,8 +96,11 @@ fn update_click_through_state<R: Runtime>(app: &AppHandle<R>, state: &OverlaySta
     };
     let interactive_regions = state.interactive_regions.lock().unwrap().clone();
     let overlay_enabled = *state.enabled.lock().unwrap();
-    let should_click_through =
-        overlay_enabled && !interactive_regions.is_empty() && is_cursor_in_passthrough_area(hwnd_raw, &interactive_regions);
+    // Contract: an empty interactive region list means "no interactive area is allowed",
+    // so the whole overlay must be click-through.
+    let should_click_through = overlay_enabled
+        && (interactive_regions.is_empty()
+            || is_cursor_in_passthrough_area(hwnd_raw, &interactive_regions));
     let mut current_click_through = state.current_click_through.lock().unwrap();
 
     if *current_click_through == should_click_through {
