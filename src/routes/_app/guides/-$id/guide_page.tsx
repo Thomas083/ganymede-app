@@ -342,13 +342,13 @@ export function GuidePage({ id, stepIndex: index }: { id: number; stepIndex: num
         >
           {step && (
             <>
-              <div className={cn('flex w-16 shrink-0 items-center justify-start pl-1 pr-2', isOverlayMode && 'w-10 pr-1 pl-0')}>
+              <div className={cn('flex w-16 shrink-0 items-center justify-start pl-1 pr-3', isOverlayMode && 'w-10 pr-6 pl-0')}>
                 {step.map !== null && step.map.toLowerCase() !== 'nomap' && (
                   <Position compact={isOverlayMode} pos_x={step.pos_x} pos_y={step.pos_y} />
                 )}
               </div>
 
-              <div className="flex flex-1 items-center justify-center pl-1">
+              <div className={cn('flex flex-1 items-center justify-center pl-1', isOverlayMode && 'ml-6')}>
                 <StepProgress
                   compact={isOverlayMode}
                   currentIndex={index}
@@ -363,7 +363,7 @@ export function GuidePage({ id, stepIndex: index }: { id: number; stepIndex: num
               <div
                 className={cn(
                   'hidden w-20 shrink-0 items-center justify-end pr-1 xs:flex sm:w-24',
-                  isOverlayMode && 'w-10 gap-0.5 pr-0 sm:w-10',
+                  isOverlayMode && 'ml-6 w-10 gap-0.5 pr-0 sm:w-10',
                 )}
               >
                 <GuideNotesMenuTrigger
