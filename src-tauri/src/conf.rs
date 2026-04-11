@@ -6,6 +6,7 @@ use tauri::{AppHandle, Manager, Runtime, Window};
 
 use crate::overlay::OverlayManager;
 use crate::tauri_api_ext::ConfPathExt;
+use crate::visibility_control::VisibilityController;
 
 // Constants
 
@@ -25,6 +26,18 @@ const fn default_auto_open_guides() -> bool {
 
 const fn default_overlay_mode() -> bool {
     false
+}
+
+const fn default_overlay_hide_in_combat() -> bool {
+    true
+}
+
+const fn default_combat_detection_enabled() -> bool {
+    true
+}
+
+fn default_dofus_log_paths() -> Vec<String> {
+    vec![]
 }
 
 const fn default_overlay_clickable_visibility() -> u32 {
@@ -263,6 +276,16 @@ pub struct OverlayLayout {
 #[derive(Debug)]
 #[taurpc::ipc_type]
 #[serde(rename_all = "camelCase")]
+pub struct CombatVisualRoi {
+    pub x: u32,
+    pub y: u32,
+    pub width: u32,
+    pub height: u32,
+}
+
+#[derive(Debug)]
+#[taurpc::ipc_type]
+#[serde(rename_all = "camelCase")]
 pub struct Conf {
     pub auto_travel_copy: bool,
     pub show_done_guides: bool,
@@ -283,6 +306,18 @@ pub struct Conf {
     pub auto_open_guides: bool,
     #[serde(default = "default_overlay_mode")]
     pub overlay_mode: bool,
+    #[serde(default = "default_overlay_hide_in_combat")]
+    pub overlay_hide_in_combat: bool,
+    #[serde(default = "default_combat_detection_enabled")]
+    pub combat_detection_enabled: bool,
+    #[serde(default = "default_dofus_log_paths")]
+    pub dofus_log_paths: Vec<String>,
+    #[serde(default)]
+    pub combat_visual_in_combat_ref: Vec<u8>,
+    #[serde(default)]
+    pub combat_visual_out_of_combat_ref: Vec<u8>,
+    #[serde(default)]
+    pub combat_visual_roi: Option<CombatVisualRoi>,
     #[serde(default = "default_overlay_clickable_visibility")]
     pub overlay_clickable_visibility: u32,
     #[serde(default)]
@@ -384,16 +419,42 @@ fn get_conf_profile_in_use_mut(conf: &mut Conf) -> Result<&mut Profile, Error> {
 fn normalize_conf(conf: &mut Conf) {
     conf.opacity = conf.opacity.clamp(0.0, 0.98);
     conf.overlay_clickable_visibility = conf.overlay_clickable_visibility.clamp(0, 100);
-    conf.overlay_layout.sidebar.collapsed_width = conf.overlay_layout.sidebar.collapsed_width.clamp(44, 96);
-    conf.overlay_layout.sidebar.expanded_width = conf.overlay_layout.sidebar.expanded_width.clamp(140, 360);
-    conf.overlay_layout.sidebar.height_percent = conf.overlay_layout.sidebar.height_percent.clamp(40, 100);
-    conf.overlay_layout.guide_header.width_percent =
-        conf.overlay_layout.guide_header.width_percent.clamp(25, 100);
+    conf.overlay_layout.sidebar.collapsed_width =
+        conf.overlay_layout.sidebar.collapsed_width.clamp(44, 96);
+    conf.overlay_layout.sidebar.expanded_width =
+        conf.overlay_layout.sidebar.expanded_width.clamp(140, 360);
+    conf.overlay_layout.sidebar.height_percent =
+        conf.overlay_layout.sidebar.height_percent.clamp(40, 100);
+    conf.overlay_layout.guide_header.width_percent = conf
+        .overlay_layout
+        .guide_header
+        .width_percent
+        .clamp(25, 100);
     conf.overlay_layout.title_bar.offset_x = conf.overlay_layout.title_bar.offset_x.clamp(0, 4000);
     conf.overlay_layout.title_bar.offset_y = conf.overlay_layout.title_bar.offset_y.clamp(0, 4000);
     conf.overlay_layout.sidebar.offset_y = conf.overlay_layout.sidebar.offset_y.clamp(0, 4000);
-    conf.overlay_layout.guide_header.offset_x = conf.overlay_layout.guide_header.offset_x.clamp(-4000, 4000);
-    conf.overlay_layout.guide_header.offset_y = conf.overlay_layout.guide_header.offset_y.clamp(-4000, 4000);
+    conf.overlay_layout.guide_header.offset_x =
+        conf.overlay_layout.guide_header.offset_x.clamp(-4000, 4000);
+    conf.overlay_layout.guide_header.offset_y =
+        conf.overlay_layout.guide_header.offset_y.clamp(-4000, 4000);
+    conf.dofus_log_paths = conf
+        .dofus_log_paths
+        .iter()
+        .map(|path| path.trim().to_string())
+        .filter(|path| !path.is_empty())
+        .collect();
+    conf.combat_visual_in_combat_ref.truncate(96 * 54);
+    conf.combat_visual_out_of_combat_ref.truncate(96 * 54);
+    conf.combat_visual_roi = conf.combat_visual_roi.take().map(|roi| {
+        let x = roi.x.min(95);
+        let y = roi.y.min(53);
+        CombatVisualRoi {
+            x,
+            y,
+            width: roi.width.clamp(1, 96 - x),
+            height: roi.height.clamp(1, 54 - y),
+        }
+    });
 }
 
 // Implementations
@@ -499,6 +560,12 @@ impl Default for Conf {
             opacity: 0.98,
             auto_open_guides: true,
             overlay_mode: false,
+            overlay_hide_in_combat: default_overlay_hide_in_combat(),
+            combat_detection_enabled: default_combat_detection_enabled(),
+            dofus_log_paths: default_dofus_log_paths(),
+            combat_visual_in_combat_ref: vec![],
+            combat_visual_out_of_combat_ref: vec![],
+            combat_visual_roi: None,
             overlay_clickable_visibility: default_overlay_clickable_visibility(),
             overlay_layout: OverlayLayout::default(),
             shortcuts: Shortcuts::default(),
@@ -575,6 +642,8 @@ impl ConfApi for ConfApiImpl {
         let mut conf = conf;
         save_conf(conf.borrow_mut(), &app)?;
         app.state::<OverlayManager>().set_enabled(conf.overlay_mode);
+        app.state::<VisibilityController>()
+            .sync_with_conf(&app, &conf);
 
         Ok(())
     }
@@ -619,7 +688,10 @@ impl ConfApi for ConfApiImpl {
     async fn reset<R: Runtime>(self, app: AppHandle<R>, window: Window<R>) -> Result<(), Error> {
         let default_conf = &mut Conf::default();
         save_conf(default_conf, &app).map_err(|e| Error::ResetConf(Box::new(e)))?;
-        app.state::<OverlayManager>().set_enabled(default_conf.overlay_mode);
+        app.state::<OverlayManager>()
+            .set_enabled(default_conf.overlay_mode);
+        app.state::<VisibilityController>()
+            .sync_with_conf(&app, default_conf);
 
         let webview = window
             .get_webview_window("main")

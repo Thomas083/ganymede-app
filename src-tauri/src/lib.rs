@@ -1,6 +1,8 @@
 use crate::almanax::{AlmanaxApi, AlmanaxApiImpl};
 use crate::api::{Api, ApiImpl};
 use crate::base::{BaseApi, BaseApiImpl};
+use crate::combat::{CombatApi, CombatApiImpl};
+use crate::combat_state_watcher::start_combat_state_watcher;
 use crate::conf::{ConfApi, ConfApiImpl};
 use crate::deep_link::{DeepLinkApi, DeepLinkApiImpl};
 use crate::dofusdb::{DofusDbApi, DofusDbApiImpl};
@@ -18,6 +20,7 @@ use crate::step_notes::{StepNotesApi, StepNotesApiImpl};
 use crate::sync::{SyncApi, SyncApiImpl};
 use crate::update::{UpdateApi, UpdateApiImpl};
 use crate::user::{UserApi, UserApiImpl};
+use crate::visibility_control::VisibilityController;
 use crate::window_manager::WindowManager;
 use log::{error, info, LevelFilter};
 use report::{ReportApi, ReportApiImpl};
@@ -31,6 +34,9 @@ mod almanax;
 mod analytics;
 mod api;
 mod base;
+mod combat;
+mod combat_state_watcher;
+mod combat_visual;
 mod conf;
 mod deep_link;
 mod dofusdb;
@@ -54,6 +60,7 @@ mod sync;
 mod tauri_api_ext;
 mod update;
 mod user;
+mod visibility_control;
 mod window_manager;
 
 #[cfg(dev)]
@@ -186,6 +193,7 @@ pub fn run() {
         .merge(UserApiImpl.into_handler())
         .merge(ShortcutsApiImpl.into_handler())
         .merge(OverlayApiImpl.into_handler())
+        .merge(CombatApiImpl.into_handler())
         .merge(SyncApiImpl.into_handler())
         .merge(StepNotesApiImpl.into_handler())
         .merge(PinnedGuidesApiImpl.into_handler());
@@ -207,6 +215,7 @@ pub fn run() {
         app.manage(http_client.clone());
         app.manage(WindowManager::new());
         app.manage(OverlayManager::default());
+        app.manage(VisibilityController::default());
 
         #[cfg(not(debug_assertions))]
         add_breadcrumb(Breadcrumb {
@@ -247,7 +256,10 @@ pub fn run() {
 
         if let Ok(conf) = conf::get_conf(app.handle()) {
             app.state::<OverlayManager>().set_enabled(conf.overlay_mode);
+            app.state::<VisibilityController>().sync_with_conf(app.handle(), &conf);
         }
+
+        start_combat_state_watcher(app.handle());
 
         handle_first_start_setup(app.handle().clone());
 

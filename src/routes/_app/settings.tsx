@@ -1,5 +1,5 @@
 ﻿import { Trans, useLingui } from '@lingui/react/macro'
-import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useDebounce } from '@uidotdev/usehooks'
 import { TriangleAlertIcon } from 'lucide-react'
@@ -21,6 +21,7 @@ import { Slider } from '@/components/ui/slider.tsx'
 import { Switch } from '@/components/ui/switch.tsx'
 import { useSwitchProfile } from '@/hooks/use_switch_profile.ts'
 import { ConfLang, FontSize, GuideDisplay } from '@/ipc/bindings.ts'
+import { taurpc } from '@/ipc/ipc.ts'
 import { createProfileRemote } from '@/ipc/sync.ts'
 import { cn } from '@/lib/utils.ts'
 import { useNewId } from '@/mutations/new_id.mutation.ts'
@@ -126,6 +127,24 @@ function OverlaySlider({
   )
 }
 
+function getCombatCalibrationDiff(
+  inCombatRef?: number[],
+  outOfCombatRef?: number[],
+) {
+  if (!inCombatRef?.length || !outOfCombatRef?.length) {
+    return null
+  }
+  const len = Math.min(inCombatRef.length, outOfCombatRef.length)
+  if (len === 0) {
+    return null
+  }
+  let sum = 0
+  for (let i = 0; i < len; i += 1) {
+    sum += Math.abs((inCombatRef[i] ?? 0) - (outOfCombatRef[i] ?? 0))
+  }
+  return Number((sum / len).toFixed(4))
+}
+
 function Settings() {
   const { t } = useLingui()
   const { from, hash, state, search } = Route.useSearch()
@@ -136,7 +155,28 @@ function Settings() {
   const reregisterShortcuts = useReregisterShortcuts()
   const switchProfile = useSwitchProfile()
   const [opacity, setOpacity] = useState(conf.data.opacity)
+  const [dofusLogPathsInput, setDofusLogPathsInput] = useState((conf.data.dofusLogPaths ?? []).join('\n'))
   const opacityDebounced = useDebounce(opacity, 300)
+  const captureVisualReference = useMutation({
+    mutationFn: async (kind: 'InCombat' | 'OutOfCombat') => {
+      await taurpc.combat.captureVisualReference(kind)
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries(confQuery)
+    },
+  })
+  const clearVisualReferences = useMutation({
+    mutationFn: async () => {
+      await taurpc.combat.clearVisualReferences()
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries(confQuery)
+    },
+  })
+  const combatCalibrationDiff = getCombatCalibrationDiff(
+    conf.data.combatVisualInCombatRef,
+    conf.data.combatVisualOutOfCombatRef,
+  )
 
   // oxlint-disable react-hooks/exhaustive-deps -- no need more deps
   useEffect(() => {
@@ -150,6 +190,10 @@ function Settings() {
   useEffect(() => {
     window.document.documentElement.style.setProperty('--opacity', `${opacity.toFixed(2)}`)
   }, [opacity])
+
+  useEffect(() => {
+    setDofusLogPathsInput((conf.data.dofusLogPaths ?? []).join('\n'))
+  }, [conf.data.dofusLogPaths, conf.data.profileInUse])
 
 
 
@@ -337,6 +381,146 @@ function Settings() {
               id="section-overlay-layout"
               title={<Trans>Layout overlay</Trans>}
             >
+              <SettingCardSection id="section-overlay-combat-detection-enabled">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-col gap-1">
+                    <p className="font-medium text-xs leading-none">
+                      <Trans>Détection de combat DOFUS</Trans>
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      <Trans>Analyse le fichier application.log pour détecter l'entrée/sortie de combat.</Trans>
+                    </p>
+                  </div>
+                  <Switch
+                    checked={conf.data.combatDetectionEnabled ?? true}
+                    id="overlay-combat-detection-enabled"
+                    onCheckedChange={(checked) => {
+                      setConf.mutate({
+                        ...conf.data,
+                        combatDetectionEnabled: checked,
+                      })
+                    }}
+                  />
+                </div>
+              </SettingCardSection>
+              <SettingCardSection id="section-overlay-hide-in-combat">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-col gap-1">
+                    <p className="font-medium text-xs leading-none">
+                      <Trans>Masquer l'overlay en combat</Trans>
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      <Trans>Cache entièrement Ganymède pendant les combats.</Trans>
+                    </p>
+                  </div>
+                  <Switch
+                    checked={conf.data.overlayHideInCombat ?? true}
+                    id="overlay-hide-in-combat"
+                    onCheckedChange={(checked) => {
+                      setConf.mutate({
+                        ...conf.data,
+                        overlayHideInCombat: checked,
+                      })
+                    }}
+                  />
+                </div>
+              </SettingCardSection>
+              <SettingCardSection id="section-dofus-log-paths">
+                <Label className="text-xs" htmlFor="dofus-log-paths">
+                  <Trans>Chemins des logs DOFUS (optionnel)</Trans>
+                </Label>
+                <p className="text-[11px] text-muted-foreground">
+                  <Trans>
+                    Un chemin par ligne. Laissez vide pour la détection automatique (DOFUS 3 + Retro).
+                  </Trans>
+                </p>
+                <textarea
+                  className="min-h-24 rounded-md border bg-background px-3 py-2 text-xs outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  id="dofus-log-paths"
+                  onBlur={() => {
+                    const paths = dofusLogPathsInput
+                      .split('\n')
+                      .map((line) => line.trim())
+                      .filter((line) => line.length > 0)
+
+                    setConf.mutate({
+                      ...conf.data,
+                      dofusLogPaths: paths,
+                    })
+                  }}
+                  onChange={(event) => {
+                    setDofusLogPathsInput(event.currentTarget.value)
+                  }}
+                  placeholder="C:\\Users\\...\\AppData\\Local\\Ankama\\Dofus\\app\\application.log"
+                  value={dofusLogPathsInput}
+                />
+              </SettingCardSection>
+              <SettingCardSection id="section-combat-visual-calibration">
+                <p className="font-medium text-xs leading-none">
+                  <Trans>Calibration visuelle combat (recommandé DOFUS 3)</Trans>
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  <Trans>1) Clique &quot;Capture hors combat&quot; en dehors d&apos;un combat.</Trans>{' '}
+                  <Trans>2) Lance un combat puis clique &quot;Capture en combat&quot;.</Trans>
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {`État: ${conf.data.combatVisualInCombatRef?.length ? 'en combat OK' : 'en combat manquant'} / ${
+                    conf.data.combatVisualOutOfCombatRef?.length ? 'hors combat OK' : 'hors combat manquant'
+                  }`}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {`Diff calibration: ${combatCalibrationDiff ?? 'n/a'}`}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    disabled={captureVisualReference.isPending || clearVisualReferences.isPending}
+                    onClick={async () => {
+                      try {
+                        await captureVisualReference.mutateAsync('OutOfCombat')
+                        toast.success(t`Référence hors combat capturée`)
+                      } catch {
+                        toast.error(t`Impossible de capturer la référence hors combat`)
+                      }
+                    }}
+                    size="sm"
+                    type="button"
+                  >
+                    <Trans>Capture hors combat</Trans>
+                  </Button>
+                  <Button
+                    disabled={captureVisualReference.isPending || clearVisualReferences.isPending}
+                    onClick={async () => {
+                      try {
+                        await captureVisualReference.mutateAsync('InCombat')
+                        toast.success(t`Référence en combat capturée`)
+                      } catch {
+                        toast.error(t`Impossible de capturer la référence en combat`)
+                      }
+                    }}
+                    size="sm"
+                    type="button"
+                    variant="secondary"
+                  >
+                    <Trans>Capture en combat</Trans>
+                  </Button>
+                  <Button
+                    disabled={captureVisualReference.isPending || clearVisualReferences.isPending}
+                    onClick={async () => {
+                      try {
+                        await clearVisualReferences.mutateAsync()
+                        toast.success(t`Calibration visuelle réinitialisée`)
+                      } catch {
+                        toast.error(t`Impossible de réinitialiser la calibration visuelle`)
+                      }
+                    }}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    <Trans>Réinitialiser calibration</Trans>
+                  </Button>
+                </div>
+              </SettingCardSection>
               <SettingCardSection id="section-overlay-clickable-visibility">
                 <p className="font-medium text-xs leading-none">
                   <Trans>Éléments cliquables</Trans>
@@ -550,4 +734,3 @@ function Settings() {
     </Page>
   )
 }
-

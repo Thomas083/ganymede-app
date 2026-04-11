@@ -8,6 +8,7 @@ use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 use crate::conf::{backup_conf, get_conf, save_conf, Conf, Shortcuts};
 use crate::event::Event;
 use crate::guides::GuidesEventTrigger;
+use crate::visibility_control::VisibilityController;
 
 #[derive(Clone)]
 pub struct ShortcutsCache(Arc<Mutex<Shortcuts>>);
@@ -202,16 +203,14 @@ pub fn handle_shortcuts(app: &App) -> Result<(), Error> {
                                 if let Some(window) = app_handle.get_webview_window("main") {
                                     match window.is_visible() {
                                         Ok(true) => {
-                                            if let Err(err) = window.hide() {
-                                                error!("[Shortcut] failed to hide window: {}", err);
-                                            }
+                                            app_handle
+                                                .state::<VisibilityController>()
+                                                .set_manual_hidden(&app_handle, true);
                                         }
                                         Ok(false) => {
-                                            if let Err(err) = window.show() {
-                                                error!("[Shortcut] failed to show window: {}", err);
-                                            } else if let Err(err) = window.set_focus() {
-                                                error!("[Shortcut] failed to focus window: {}", err);
-                                            }
+                                            app_handle
+                                                .state::<VisibilityController>()
+                                                .set_manual_hidden(&app_handle, false);
                                         }
                                         Err(err) => {
                                             error!(

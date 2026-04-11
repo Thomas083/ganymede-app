@@ -1,6 +1,7 @@
 pub enum Event {
     GoToNextGuideStep,
     GoToPreviousGuideStep,
+    CombatStateChanged,
     UpdateStarted,
     UpdateInProgress,
     UpdateFinished,
@@ -12,6 +13,7 @@ impl Into<&str> for Event {
         match self {
             Event::GoToNextGuideStep => "go-to-next-guide-step",
             Event::GoToPreviousGuideStep => "go-to-previous-guide-step",
+            Event::CombatStateChanged => "combat-state-changed",
             Event::UpdateStarted => "update-started",
             Event::UpdateInProgress => "update-in-progress",
             Event::UpdateFinished => "update-finished",
