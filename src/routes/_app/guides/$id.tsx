@@ -17,10 +17,12 @@ import { useProfile } from '@/hooks/use_profile.ts'
 import { useTabs } from '@/hooks/use_tabs.ts'
 import { registerGuideOpen, setRecentGuides } from '@/ipc/guides.ts'
 import { getGuideById, getStepClamped } from '@/lib/guide.ts'
+import { clampOverlayLayout, getOverlayLayout, isOverlayEditModeEnabled } from '@/lib/overlay_layout.ts'
 import { getProfile } from '@/lib/profile.ts'
 import { getProgress } from '@/lib/progress.ts'
 import { OpenedGuideDropPosition, reorderOpenedGuides } from '@/lib/tabs.ts'
 import { cn } from '@/lib/utils.ts'
+import { useSetConf } from '@/mutations/set_conf.mutation.ts'
 import { confQuery } from '@/queries/conf.query.ts'
 import { guidesQuery } from '@/queries/guides.query.ts'
 import { stepNotesQuery } from '@/queries/step_notes.query.ts'
@@ -161,6 +163,7 @@ function GuideIdPage() {
   const profile = useProfile()
   const guides = useSuspenseQuery(guidesQuery())
   const conf = useSuspenseQuery(confQuery)
+  const setConf = useSetConf()
   const isOverlayMode = conf.data.overlayMode ?? false
   const tabsListRef = useRef<HTMLDivElement | null>(null)
   const pendingDragRef = useRef<PendingGuideTabDrag | null>(null)
@@ -524,13 +527,151 @@ function GuideIdPage() {
     }
   }, [])
 
-  const overlaySidebar = conf.data.overlayLayout?.sidebar
-  const sidebarCollapsedWidth = overlaySidebar?.collapsedWidth ?? 56
-  const sidebarExpandedWidth = overlaySidebar?.expandedWidth ?? 224
+  const overlayLayout = getOverlayLayout(conf.data.overlayLayout)
+  const normalizedOverlaySidebar = overlayLayout.sidebar
+  const isOverlayEditMode = isOverlayMode && isOverlayEditModeEnabled(conf.data)
+  const [liveSidebar, setLiveSidebar] = useState<{
+    offsetY: number
+    collapsedWidth: number
+    expandedWidth: number
+    heightPercent: number
+  } | null>(null)
+  const sidebarCollapsedWidth = liveSidebar?.collapsedWidth ?? normalizedOverlaySidebar.collapsedWidth
+  const sidebarExpandedWidth = liveSidebar?.expandedWidth ?? normalizedOverlaySidebar.expandedWidth
   const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 720
   const availableSidebarHeight = Math.max(0, viewportHeight - 30)
-  const sidebarOffsetY = Math.max(0, Math.min(overlaySidebar?.offsetY ?? 0, Math.max(0, availableSidebarHeight - 48)))
-  const sidebarHeightPercent = overlaySidebar?.heightPercent ?? 100
+  const sidebarOffsetY = Math.max(
+    0,
+    Math.min(liveSidebar?.offsetY ?? normalizedOverlaySidebar.offsetY, Math.max(0, availableSidebarHeight - 48)),
+  )
+  const sidebarHeightPercent = liveSidebar?.heightPercent ?? normalizedOverlaySidebar.heightPercent
+
+  useEffect(() => {
+    setLiveSidebar(null)
+  }, [conf.data.overlayLayout, conf.data.profileInUse])
+
+  const commitSidebarLayout = (nextSidebar: {
+    offsetY: number
+    collapsedWidth: number
+    expandedWidth: number
+    heightPercent: number
+  }) => {
+    const nextLayout = clampOverlayLayout({
+      ...overlayLayout,
+      sidebar: {
+        ...overlayLayout.sidebar,
+        ...nextSidebar,
+      },
+    })
+
+    setConf.mutate({
+      ...conf.data,
+      overlayLayout: nextLayout,
+    })
+  }
+
+  const startSidebarMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!isOverlayEditMode) {
+      return
+    }
+
+    if ((event.target as HTMLElement).closest('[data-overlay-resize-handle="true"]')) {
+      return
+    }
+
+    event.preventDefault()
+    event.stopPropagation()
+    const startY = event.clientY
+    const startOffsetY = sidebarOffsetY
+    let lastOffsetY = startOffsetY
+    const maxOffsetY = Math.max(0, window.innerHeight - 30 - 48)
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const deltaY = moveEvent.clientY - startY
+      lastOffsetY = Math.max(0, Math.min(startOffsetY + Math.round(deltaY), maxOffsetY))
+      setLiveSidebar((prev) => ({
+        offsetY: lastOffsetY,
+        collapsedWidth: prev?.collapsedWidth ?? sidebarCollapsedWidth,
+        expandedWidth: prev?.expandedWidth ?? sidebarExpandedWidth,
+        heightPercent: prev?.heightPercent ?? sidebarHeightPercent,
+      }))
+    }
+
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      setLiveSidebar((prev) => {
+        const finalSidebar = {
+          offsetY: lastOffsetY,
+          collapsedWidth: prev?.collapsedWidth ?? sidebarCollapsedWidth,
+          expandedWidth: prev?.expandedWidth ?? sidebarExpandedWidth,
+          heightPercent: prev?.heightPercent ?? sidebarHeightPercent,
+        }
+        commitSidebarLayout(finalSidebar)
+        return null
+      })
+    }
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
+
+  const startSidebarHandleResize = (
+    event: ReactPointerEvent<HTMLDivElement>,
+    mode: 'collapsedWidth' | 'expandedWidth' | 'heightPercent',
+  ) => {
+    if (!isOverlayEditMode) {
+      return
+    }
+
+    event.preventDefault()
+    event.stopPropagation()
+    const startX = event.clientX
+    const startY = event.clientY
+    const startCollapsed = sidebarCollapsedWidth
+    const startExpanded = sidebarExpandedWidth
+    const startHeightPercent = sidebarHeightPercent
+    const sidebarHeightPx = ((availableSidebarHeight - sidebarOffsetY) * startHeightPercent) / 100
+    let finalSidebar = {
+      offsetY: sidebarOffsetY,
+      collapsedWidth: startCollapsed,
+      expandedWidth: startExpanded,
+      heightPercent: startHeightPercent,
+    }
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const deltaX = moveEvent.clientX - startX
+      const deltaY = moveEvent.clientY - startY
+      const nextSidebar = { ...finalSidebar }
+
+      if (mode === 'collapsedWidth') {
+        const nextCollapsedWidth = Math.max(44, Math.min(96, startCollapsed + Math.round(deltaX)))
+        nextSidebar.collapsedWidth = Math.min(nextCollapsedWidth, nextSidebar.expandedWidth - 24)
+      }
+      if (mode === 'expandedWidth') {
+        const nextExpandedWidth = Math.max(140, Math.min(360, startExpanded + Math.round(deltaX)))
+        nextSidebar.expandedWidth = Math.max(nextExpandedWidth, nextSidebar.collapsedWidth + 24)
+      }
+      if (mode === 'heightPercent') {
+        const nextHeightPx = Math.max(36, sidebarHeightPx + deltaY)
+        const availableHeight = Math.max(1, availableSidebarHeight - sidebarOffsetY)
+        nextSidebar.heightPercent = Math.max(40, Math.min(100, Math.round((nextHeightPx / availableHeight) * 100)))
+      }
+
+      finalSidebar = nextSidebar
+      setLiveSidebar(nextSidebar)
+    }
+
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      setLiveSidebar(null)
+      commitSidebarLayout(finalSidebar)
+    }
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
 
   return (
     <PageContent key="guide">
@@ -554,8 +695,11 @@ function GuideIdPage() {
               'flex w-full bg-surface-card text-primary-foreground-800',
               isOverlayMode &&
                 'group/overlay-tabs shrink-0 flex-col border-r border-border-muted transition-[width] duration-150 w-[var(--overlay-sidebar-collapsed-width)] hover:w-[var(--overlay-sidebar-expanded-width)]',
+              isOverlayEditMode && 'relative w-[var(--overlay-sidebar-expanded-width)] hover:w-[var(--overlay-sidebar-expanded-width)] ring-2 ring-accent/70 transition-none',
             )}
             data-overlay-interactive="true"
+            data-overlay-editable={isOverlayEditMode ? 'true' : undefined}
+            onPointerDown={startSidebarMove}
             style={
               isOverlayMode
                 ? {
@@ -567,6 +711,29 @@ function GuideIdPage() {
                 : undefined
             }
           >
+            {isOverlayEditMode && (
+              <>
+                <div
+                  className="absolute top-1 h-[calc(100%-0.5rem)] w-2 -translate-x-1/2 cursor-ew-resize rounded bg-accent/70"
+                  data-overlay-resize-handle="true"
+                  onPointerDown={(event) => startSidebarHandleResize(event, 'collapsedWidth')}
+                  style={{ left: `${sidebarCollapsedWidth}px` }}
+                  title="Largeur fermée"
+                />
+                <div
+                  className="absolute top-1 right-[-6px] h-[calc(100%-0.5rem)] w-2 cursor-ew-resize rounded border border-dashed border-accent bg-accent/40"
+                  data-overlay-resize-handle="true"
+                  onPointerDown={(event) => startSidebarHandleResize(event, 'expandedWidth')}
+                  title="Largeur ouverte"
+                />
+                <div
+                  className="absolute right-1 bottom-1 h-2 w-[calc(100%-0.5rem)] cursor-ns-resize rounded bg-accent/70"
+                  data-overlay-resize-handle="true"
+                  onPointerDown={(event) => startSidebarHandleResize(event, 'heightPercent')}
+                  title="Longueur"
+                />
+              </>
+            )}
             <TabsList
               className={cn(
                 'group scrollbar-hide h-10 flex-1 overflow-x-auto overflow-y-hidden pl-0',

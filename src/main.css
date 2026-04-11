@@ -564,6 +564,15 @@
       color-mix(in srgb, var(--color-border-muted) calc(var(--overlay-clickable-visibility) * 100%), transparent);
     backdrop-filter: blur(1px);
   }
+
+  :root[data-overlay-edit-mode="true"] a[href]:not([data-overlay-edit-allow="true"]),
+  :root[data-overlay-edit-mode="true"] button:not([data-overlay-edit-allow="true"]),
+  :root[data-overlay-edit-mode="true"] input:not([type="hidden"]):not([data-overlay-edit-allow="true"]),
+  :root[data-overlay-edit-mode="true"] textarea:not([data-overlay-edit-allow="true"]),
+  :root[data-overlay-edit-mode="true"] select:not([data-overlay-edit-allow="true"]),
+  :root[data-overlay-edit-mode="true"] [role="button"]:not([data-overlay-edit-allow="true"]) {
+    pointer-events: none !important;
+  }
 }
 
 .toaster[data-sonner-toaster][data-sonner-theme='dark'] {

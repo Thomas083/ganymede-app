@@ -15,6 +15,10 @@ const fn default_level() -> u32 {
     DEFAULT_LEVEL
 }
 
+const fn default_overlay_edit_mode() -> bool {
+    false
+}
+
 const fn default_auto_open_guides() -> bool {
     true
 }
@@ -167,6 +171,8 @@ pub struct Profile {
     pub progresses: Vec<Progress>,
     #[serde(default)]
     pub server_id: Option<u32>,
+    #[serde(default = "default_overlay_edit_mode", rename = "overlayEditMode")]
+    pub overlay_edit_mode: bool,
 }
 
 #[derive(Debug)]
@@ -501,6 +507,7 @@ impl Default for Profile {
             level: 200,
             progresses: vec![],
             server_id: None,
+            overlay_edit_mode: default_overlay_edit_mode(),
         }
     }
 }

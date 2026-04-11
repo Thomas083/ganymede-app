@@ -86,7 +86,7 @@ export type OverlaySidebarLayout = { offsetY?: number; collapsedWidth?: number; 
 
 export type OverlayTitleBarLayout = { offsetX?: number; offsetY?: number }
 
-export type Profile = { id: string; name: string; level?: number; progresses: Progress[]; server_id?: number | null }
+export type Profile = { id: string; name: string; level?: number; progresses: Progress[]; server_id?: number | null; overlayEditMode?: boolean }
 
 export type ProfilePinnedGuides = { guides: number[] }
 

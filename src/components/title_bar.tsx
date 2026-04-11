@@ -15,9 +15,11 @@ import {
   MinusIcon,
   NotebookPenIcon,
   NotebookTextIcon,
+  PencilRulerIcon,
   SettingsIcon,
   XIcon,
 } from 'lucide-react'
+import { type PointerEvent as ReactPointerEvent, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import {
@@ -30,11 +32,19 @@ import {
 import { useIsBodyLockedFromDialog } from '@/hooks/use_is_body_locked_from_dialog.ts'
 import { getLang } from '@/lib/conf.ts'
 import { isInImageViewerPath } from '@/lib/image_viewer.ts'
+import {
+  OVERLAY_TITLE_BAR_HEIGHT,
+  OVERLAY_TITLE_BAR_WIDTH,
+  getOverlayLayout,
+  isOverlayEditModeEnabled,
+  withOverlayEditMode,
+} from '@/lib/overlay_layout.ts'
 import { cn } from '@/lib/utils.ts'
 import { useCleanAuthTokens } from '@/mutations/clean_auth_tokens.mutation.ts'
 import { useOpenDofusDbHunt } from '@/mutations/open_dofusdb_hunt.mutation.ts'
 import { useOpenDofusDbMap } from '@/mutations/open_dofusdb_map.mutation.ts'
 import { useOpenUrlInBrowser } from '@/mutations/open_url_in_browser.ts'
+import { useSetConf } from '@/mutations/set_conf.mutation.ts'
 import { useStartOAuthFlow } from '@/mutations/start_oauth_flow.mutation.ts'
 import { confQuery } from '@/queries/conf.query.ts'
 import { getAuthTokensQuery } from '@/queries/get_auth_tokens.query.ts'
@@ -49,6 +59,7 @@ export function TitleBar() {
   const openInBrowser = useOpenUrlInBrowser()
   const isBodyLocked = useIsBodyLockedFromDialog()
   const startOAuthFlow = useStartOAuthFlow()
+  const setConf = useSetConf()
   const authTokens = useQuery(getAuthTokensQuery)
   const cleanAuthTokens = useCleanAuthTokens()
   const conf = useQuery(confQuery)
@@ -59,21 +70,88 @@ export function TitleBar() {
   const isImageViewer = isInImageViewerPath(location.pathname)
   const title = location.search.title || 'Ganymède'
   const isOverlayMode = conf.data?.overlayMode ?? false
-  const overlayTitleBar = conf.data?.overlayLayout?.titleBar
+  const overlayLayout = getOverlayLayout(conf.data?.overlayLayout)
+  const overlayTitleBar = overlayLayout.titleBar
+  const isOverlayEditMode = conf.data ? isOverlayEditModeEnabled(conf.data) : false
+  const [liveOffsets, setLiveOffsets] = useState<{ offsetX: number; offsetY: number } | null>(null)
   const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1280
   const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 720
-  const titleBarWidth = 84
-  const titleBarHeight = 30
-  const overlayTitleBarLeft = Math.max(0, Math.min(overlayTitleBar?.offsetX ?? 0, Math.max(0, viewportWidth - titleBarWidth)))
-  const overlayTitleBarTop = Math.max(0, Math.min(overlayTitleBar?.offsetY ?? 0, Math.max(0, viewportHeight - titleBarHeight)))
+  const titleBarWidth = OVERLAY_TITLE_BAR_WIDTH
+  const titleBarHeight = OVERLAY_TITLE_BAR_HEIGHT
+  const activeTitleBarOffsetX = liveOffsets?.offsetX ?? overlayTitleBar.offsetX
+  const activeTitleBarOffsetY = liveOffsets?.offsetY ?? overlayTitleBar.offsetY
+  const overlayTitleBarLeft = Math.max(0, Math.min(activeTitleBarOffsetX, Math.max(0, viewportWidth - titleBarWidth)))
+  const overlayTitleBarTop = Math.max(0, Math.min(activeTitleBarOffsetY, Math.max(0, viewportHeight - titleBarHeight)))
+
+  useEffect(() => {
+    setLiveOffsets(null)
+  }, [overlayTitleBar.offsetX, overlayTitleBar.offsetY, conf.data?.profileInUse])
+
+  const toggleEditMode = () => {
+    if (!conf.data) {
+      return
+    }
+
+    setConf.mutate(withOverlayEditMode(conf.data, !isOverlayEditMode))
+  }
+
+  const startTitleBarDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!conf.data || !isOverlayMode || !isOverlayEditMode) {
+      return
+    }
+
+    event.preventDefault()
+    event.stopPropagation()
+
+    const startX = event.clientX
+    const startY = event.clientY
+    const startOffsetX = overlayTitleBar.offsetX
+    const startOffsetY = overlayTitleBar.offsetY
+    let lastOffsetX = startOffsetX
+    let lastOffsetY = startOffsetY
+
+    const maxOffsetX = Math.max(0, window.innerWidth - titleBarWidth)
+    const maxOffsetY = Math.max(0, window.innerHeight - titleBarHeight)
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const deltaX = moveEvent.clientX - startX
+      const deltaY = moveEvent.clientY - startY
+
+      lastOffsetX = Math.max(0, Math.min(startOffsetX + Math.round(deltaX), maxOffsetX))
+      lastOffsetY = Math.max(0, Math.min(startOffsetY + Math.round(deltaY), maxOffsetY))
+      setLiveOffsets({ offsetX: lastOffsetX, offsetY: lastOffsetY })
+    }
+
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      setLiveOffsets(null)
+      setConf.mutate({
+        ...conf.data,
+        overlayLayout: {
+          ...overlayLayout,
+          titleBar: {
+            ...overlayLayout.titleBar,
+            offsetX: lastOffsetX,
+            offsetY: lastOffsetY,
+          },
+        },
+      })
+    }
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
 
   return (
     <div
       className={cn(
         'pointer-events-auto sticky top-0 z-60 flex h-titlebar items-center bg-surface-inset text-primary-foreground',
         isOverlayMode && 'w-fit rounded-br-md shadow-md',
+        isOverlayEditMode && 'ring-2 ring-accent/70',
       )}
       data-overlay-interactive="true"
+      data-overlay-editable={isOverlayEditMode ? 'true' : undefined}
       style={
         isOverlayMode
           ? {
@@ -197,6 +275,31 @@ export function TitleBar() {
         </>
       )}
       <div className={cn('flex h-full justify-end', !isOverlayMode && 'ml-auto')}>
+        {isOverlayMode && (
+          <>
+            <button
+              className={cn(
+                'inline-flex h-titlebar w-6 xs:w-titlebar items-center justify-center',
+                isOverlayEditMode ? 'bg-accent/70 text-accent-foreground hover:bg-accent' : 'hover:bg-surface-card',
+              )}
+              data-overlay-edit-allow="true"
+              onClick={toggleEditMode}
+              title={isOverlayEditMode ? t`Quitter le mode édition` : t`Mode édition`}
+            >
+              <PencilRulerIcon className="size-4" />
+            </button>
+            {isOverlayEditMode && (
+              <button
+                className="inline-flex h-titlebar w-6 xs:w-titlebar items-center justify-center cursor-grab bg-accent/30 hover:bg-accent/50"
+                data-overlay-edit-allow="true"
+                onPointerDown={startTitleBarDrag}
+                title={t`Déplacer la barre`}
+              >
+                <MenuIcon className="size-4" />
+              </button>
+            )}
+          </>
+        )}
         {!linksAreDisabled && !isImageViewer && (
           <Link
             className="inline-flex h-titlebar w-6 items-center justify-center hover:bg-surface-card aria-disabled:pointer-events-none xs:w-titlebar"

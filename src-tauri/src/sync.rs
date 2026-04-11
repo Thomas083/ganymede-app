@@ -425,6 +425,7 @@ impl SyncApi for SyncApiImpl {
                         })
                         .collect(),
                     server_id: Some(remote_profile.id),
+                    overlay_edit_mode: false,
                 });
             }
         }

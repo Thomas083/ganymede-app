@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { error } from '@tauri-apps/plugin-log'
 import { InteractiveRegion } from '@/ipc/bindings.ts'
 import { setInteractiveRegions } from '@/ipc/overlay.ts'
+import { isOverlayEditModeEnabled } from '@/lib/overlay_layout.ts'
 import { confQuery } from '@/queries/conf.query.ts'
 
 const OVERLAY_INTERACTIVE_SELECTOR = [
@@ -66,6 +67,7 @@ export function useOverlaySync() {
   const conf = useQuery(confQuery)
   const location = useLocation()
   const isSettingsRoute = location.pathname === '/settings'
+  const isOverlayEditMode = conf.data ? isOverlayEditModeEnabled(conf.data) : false
 
   useEffect(() => {
     if (!conf.data?.overlayMode) {
@@ -88,7 +90,7 @@ export function useOverlaySync() {
     function syncNow() {
       frameId = 0
 
-      const interactiveRegions = isSettingsRoute ? getFullWindowInteractiveRegion() : collectInteractiveRegions()
+      const interactiveRegions = isSettingsRoute || isOverlayEditMode ? getFullWindowInteractiveRegion() : collectInteractiveRegions()
 
       setInteractiveRegions(interactiveRegions).then((result) => {
         if (result.isErr()) {
@@ -129,5 +131,5 @@ export function useOverlaySync() {
       window.removeEventListener('resize', scheduleSync)
       window.removeEventListener('scroll', scheduleSync, true)
     }
-  }, [conf.data?.overlayMode, isSettingsRoute])
+  }, [conf.data?.overlayMode, isSettingsRoute, isOverlayEditMode])
 }

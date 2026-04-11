@@ -13,6 +13,7 @@ import { useMalformedGuidesHandler } from '@/hooks/use_malformed_guides_handler.
 import { useOverlaySync } from '@/hooks/use_overlay_sync.ts'
 import { taurpc } from '@/ipc/ipc.ts'
 import { isInImageViewerPath } from '@/lib/image_viewer.ts'
+import { isOverlayEditModeEnabled } from '@/lib/overlay_layout.ts'
 import { confQuery } from '@/queries/conf.query.ts'
 
 export const Route = createRootRouteWithContext<{
@@ -41,6 +42,11 @@ function Root() {
     const visibility = (conf.data?.overlayClickableVisibility ?? 75) / 100
     window.document.documentElement.style.setProperty('--overlay-clickable-visibility', visibility.toFixed(2))
   }, [conf.data?.overlayClickableVisibility])
+
+  useEffect(() => {
+    const isEditMode = conf.data?.overlayMode && isOverlayEditModeEnabled(conf.data)
+    window.document.documentElement.dataset.overlayEditMode = isEditMode ? 'true' : 'false'
+  }, [conf.data])
 
   return (
     <>
