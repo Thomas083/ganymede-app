@@ -331,13 +331,14 @@ export function GuidePage({ id, stepIndex: index }: { id: number; stepIndex: num
         style={{
           backgroundColor: bgColor,
           left: isOverlayMode ? `${overlayHeaderLeft}px` : 0,
-          right: 0,
+          right: isOverlayMode ? 'auto' : 0,
+          width: isOverlayMode ? `${guideHeaderContainerWidth}px` : undefined,
           transform: isOverlayMode ? `translateY(${overlayHeaderTopOffset}px)` : undefined,
         }}
       >
         <div
-          className={cn('flex h-10 items-center p-1', isOverlayMode && 'mx-auto min-w-0')}
-          style={isOverlayMode ? { width: `${overlayHeaderWidthPercent}%` } : undefined}
+          className={cn('flex h-10 items-center p-1 min-w-0')}
+          style={isOverlayMode ? { width: '100%' } : undefined}
         >
           {step && (
             <>

@@ -540,11 +540,12 @@ function GuideIdPage() {
   const sidebarExpandedWidth = liveSidebar?.expandedWidth ?? normalizedOverlaySidebar.expandedWidth
   const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 720
   const availableSidebarHeight = Math.max(0, viewportHeight - 30)
+  const sidebarHeightPercent = liveSidebar?.heightPercent ?? normalizedOverlaySidebar.heightPercent
+  const sidebarHeightPx = Math.max(48, Math.round((availableSidebarHeight * sidebarHeightPercent) / 100))
   const sidebarOffsetY = Math.max(
     0,
-    Math.min(liveSidebar?.offsetY ?? normalizedOverlaySidebar.offsetY, Math.max(0, availableSidebarHeight - 48)),
+    Math.min(liveSidebar?.offsetY ?? normalizedOverlaySidebar.offsetY, Math.max(0, availableSidebarHeight - sidebarHeightPx)),
   )
-  const sidebarHeightPercent = liveSidebar?.heightPercent ?? normalizedOverlaySidebar.heightPercent
 
   useEffect(() => {
     setLiveSidebar(null)
@@ -584,7 +585,7 @@ function GuideIdPage() {
     const startY = event.clientY
     const startOffsetY = sidebarOffsetY
     let lastOffsetY = startOffsetY
-    const maxOffsetY = Math.max(0, window.innerHeight - 30 - 48)
+    const maxOffsetY = Math.max(0, window.innerHeight - 30 - sidebarHeightPx)
 
     const onMove = (moveEvent: PointerEvent) => {
       const deltaY = moveEvent.clientY - startY
@@ -631,7 +632,7 @@ function GuideIdPage() {
     const startCollapsed = sidebarCollapsedWidth
     const startExpanded = sidebarExpandedWidth
     const startHeightPercent = sidebarHeightPercent
-    const sidebarHeightPx = ((availableSidebarHeight - sidebarOffsetY) * startHeightPercent) / 100
+    const startSidebarHeightPx = Math.max(48, (availableSidebarHeight * startHeightPercent) / 100)
     let finalSidebar = {
       offsetY: sidebarOffsetY,
       collapsedWidth: startCollapsed,
@@ -653,8 +654,8 @@ function GuideIdPage() {
         nextSidebar.expandedWidth = Math.max(nextExpandedWidth, nextSidebar.collapsedWidth + 24)
       }
       if (mode === 'heightPercent') {
-        const nextHeightPx = Math.max(36, sidebarHeightPx + deltaY)
-        const availableHeight = Math.max(1, availableSidebarHeight - sidebarOffsetY)
+        const nextHeightPx = Math.max(48, startSidebarHeightPx + deltaY)
+        const availableHeight = Math.max(1, availableSidebarHeight)
         nextSidebar.heightPercent = Math.max(40, Math.min(100, Math.round((nextHeightPx / availableHeight) * 100)))
       }
 
@@ -706,7 +707,7 @@ function GuideIdPage() {
                     ['--overlay-sidebar-collapsed-width' as string]: `${sidebarCollapsedWidth}px`,
                     ['--overlay-sidebar-expanded-width' as string]: `${sidebarExpandedWidth}px`,
                     marginTop: `${sidebarOffsetY}px`,
-                    height: `calc((100vh - var(--spacing-titlebar) - ${sidebarOffsetY}px) * ${sidebarHeightPercent} / 100)`,
+                    height: `${sidebarHeightPx}px`,
                   }
                 : undefined
             }
