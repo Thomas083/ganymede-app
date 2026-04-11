@@ -62,7 +62,7 @@ export function clampOverlayLayout(layout: OverlayLayoutRequired): OverlayLayout
       heightPercent: clamp(layout.sidebar.heightPercent, 40, 100),
     },
     guideHeader: {
-      widthPercent: clamp(layout.guideHeader.widthPercent, 50, 100),
+      widthPercent: clamp(layout.guideHeader.widthPercent, 25, 100),
       offsetX: clamp(layout.guideHeader.offsetX, -4000, 4000),
       offsetY: clamp(layout.guideHeader.offsetY, -4000, 4000),
     },

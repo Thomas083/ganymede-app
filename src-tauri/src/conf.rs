@@ -382,7 +382,7 @@ fn normalize_conf(conf: &mut Conf) {
     conf.overlay_layout.sidebar.expanded_width = conf.overlay_layout.sidebar.expanded_width.clamp(140, 360);
     conf.overlay_layout.sidebar.height_percent = conf.overlay_layout.sidebar.height_percent.clamp(40, 100);
     conf.overlay_layout.guide_header.width_percent =
-        conf.overlay_layout.guide_header.width_percent.clamp(50, 100);
+        conf.overlay_layout.guide_header.width_percent.clamp(25, 100);
     conf.overlay_layout.title_bar.offset_x = conf.overlay_layout.title_bar.offset_x.clamp(0, 4000);
     conf.overlay_layout.title_bar.offset_y = conf.overlay_layout.title_bar.offset_y.clamp(0, 4000);
     conf.overlay_layout.sidebar.offset_y = conf.overlay_layout.sidebar.offset_y.clamp(0, 4000);

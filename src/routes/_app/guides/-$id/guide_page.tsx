@@ -176,7 +176,7 @@ export function GuidePage({ id, stepIndex: index }: { id: number; stepIndex: num
     const onMove = (moveEvent: PointerEvent) => {
       const deltaX = moveEvent.clientX - startX
       const nextWidthPx = Math.max(240, currentWidthPx + deltaX)
-      const nextWidthPercent = Math.max(50, Math.min(100, Math.round((nextWidthPx / availableWidth) * 100)))
+      const nextWidthPercent = Math.max(25, Math.min(100, Math.round((nextWidthPx / availableWidth) * 100)))
       finalHeader = {
         ...finalHeader,
         widthPercent: nextWidthPercent,
@@ -342,13 +342,13 @@ export function GuidePage({ id, stepIndex: index }: { id: number; stepIndex: num
         >
           {step && (
             <>
-              <div className={cn('flex w-16 shrink-0 items-center justify-start pl-1', isOverlayMode && 'w-10 pl-0')}>
+              <div className={cn('flex w-16 shrink-0 items-center justify-start pl-1 pr-2', isOverlayMode && 'w-10 pr-1 pl-0')}>
                 {step.map !== null && step.map.toLowerCase() !== 'nomap' && (
                   <Position compact={isOverlayMode} pos_x={step.pos_x} pos_y={step.pos_y} />
                 )}
               </div>
 
-              <div className="flex flex-1 items-center justify-center">
+              <div className="flex flex-1 items-center justify-center pl-1">
                 <StepProgress
                   compact={isOverlayMode}
                   currentIndex={index}
