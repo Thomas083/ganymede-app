@@ -22,7 +22,9 @@ export type CombatReferenceKind = "InCombat" | "OutOfCombat"
 
 export type CombatVisualRoi = { x: number; y: number; width: number; height: number }
 
-export type Conf = { autoTravelCopy: boolean; showDoneGuides: boolean; lang?: ConfLang; theme?: ConfTheme; fontSize?: FontSize; guideDisplay?: GuideDisplay; profiles: Profile[]; profileInUse: string; autoPilots: AutoPilot[]; notes: Note[]; opacity: number; autoOpenGuides?: boolean; overlayMode?: boolean; overlayHideInCombat?: boolean; combatDetectionEnabled?: boolean; dofusLogPaths?: string[]; combatVisualInCombatRef?: number[]; combatVisualOutOfCombatRef?: number[]; combatVisualRoi?: CombatVisualRoi | null; overlayClickableVisibility?: number; overlayLayout?: OverlayLayout; shortcuts?: Shortcuts }
+export type AutoTravelStepSource = "Current" | "Next"
+
+export type Conf = { autoTravelCopy: boolean; autoTravelStepSource?: AutoTravelStepSource; showDoneGuides: boolean; lang?: ConfLang; theme?: ConfTheme; fontSize?: FontSize; guideDisplay?: GuideDisplay; profiles: Profile[]; profileInUse: string; autoPilots: AutoPilot[]; notes: Note[]; opacity: number; autoOpenGuides?: boolean; overlayMode?: boolean; overlayHideInCombat?: boolean; combatDetectionEnabled?: boolean; dofusLogPaths?: string[]; combatVisualInCombatRef?: number[]; combatVisualOutOfCombatRef?: number[]; combatVisualRoi?: CombatVisualRoi | null; overlayClickableVisibility?: number; overlayLayout?: OverlayLayout; shortcuts?: Shortcuts }
 
 export type ConfError = { Malformed: JsonError } | { CreateConfDir: string } | { ConfDir: string } | { SerializeConf: JsonError } | { UnhandledIo: string } | { SaveConf: string } | "GetProfileInUse" | { ResetConf: ConfError }
 
