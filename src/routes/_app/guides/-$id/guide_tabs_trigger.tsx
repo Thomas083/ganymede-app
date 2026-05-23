@@ -218,6 +218,11 @@ export function GuideTabsTrigger({
                     await onOpenTab()
                   }}
                   onMouseDown={(evt) => {
+                    if (evt.button === 0) {
+                      evt.preventDefault()
+                      return
+                    }
+
                     if (evt.button === 1) {
                       evt.preventDefault()
                       evt.stopPropagation()
