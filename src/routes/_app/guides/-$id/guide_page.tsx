@@ -11,7 +11,9 @@ import { StepProgress } from '@/components/step_progress/step_progress.tsx'
 import { useGuide } from '@/hooks/use_guide.ts'
 import { useScrollToTop } from '@/hooks/use_scroll_to_top.ts'
 import { useStepNoteReminder } from '@/hooks/use_step_note_reminder.tsx'
+import type { GuideStep } from '@/ipc/bindings.ts'
 import { onCopyCurrentGuideStep } from '@/ipc/guides.ts'
+import { copyPosition } from '@/lib/copy_position.ts'
 import {
   OVERLAY_GUIDE_HEADER_BASE_TOP,
   OVERLAY_GUIDE_HEADER_HEIGHT,
@@ -41,26 +43,8 @@ const useOnCopyStep = (cb: () => void) => {
   }, [cb])
 }
 
-async function copyTravelOnStepChange(posX: number, posY: number): Promise<void> {
-  const travelCommand = `/travel ${posX},${posY}`
-
-  try {
-    await writeText(travelCommand)
-    return
-  } catch (_error) {
-    // Fallback when clipboard plugin is temporarily unavailable.
-  }
-
-  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(travelCommand)
-      return
-    } catch (_error) {
-      // no-op
-    }
-  }
-
-  console.debug('Unable to copy /travel command on step change')
+function hasValidMap(step: Pick<GuideStep, 'map'> | undefined): step is GuideStep {
+  return step?.map != null && step.map.toLowerCase() !== 'nomap'
 }
 
 export function GuidePage({ id, stepIndex: index }: { id: number; stepIndex: number }) {
@@ -222,11 +206,16 @@ export function GuidePage({ id, stepIndex: index }: { id: number; stepIndex: num
 
   const changeStep = async (nextStep: number) => {
     const clampedStep = nextStep < 0 ? 0 : nextStep >= guide.steps.length ? stepMax : nextStep
-    const copySource = conf.data.autoTravelStepSource ?? 'Current'
-    const stepToCopyIndex = copySource === 'Next' ? clampedStep + 1 : clampedStep
-    const stepToCopy = guide.steps[stepToCopyIndex]
-    if (stepToCopy?.map && stepToCopy.map.toLowerCase() !== 'nomap') {
-      await copyTravelOnStepChange(stepToCopy.pos_x, stepToCopy.pos_y)
+    if (conf.data.autoTravelCopyOnStepChange) {
+      const copySource = conf.data.autoTravelStepSource ?? 'Current'
+      const stepToCopyIndex = copySource === 'Next' ? clampedStep + 1 : clampedStep
+      const stepToCopy = guide.steps[stepToCopyIndex] ?? guide.steps[clampedStep]
+
+      if (hasValidMap(stepToCopy)) {
+        void copyPosition(stepToCopy.pos_x, stepToCopy.pos_y, conf.data.autoTravelCopy).catch(() => {
+          toast.error(t`Erreur lors de la copie automatique de la position.`)
+        })
+      }
     }
     const updatedAt = new Date().toISOString()
 
@@ -371,7 +360,7 @@ export function GuidePage({ id, stepIndex: index }: { id: number; stepIndex: num
           {step && (
             <>
               <div className={cn('flex w-16 shrink-0 items-center justify-start pl-1 pr-3', isOverlayMode && 'w-10 pr-6 pl-0')}>
-                {step.map !== null && step.map.toLowerCase() !== 'nomap' && (
+                {hasValidMap(step) && (
                   <Position compact={isOverlayMode} pos_x={step.pos_x} pos_y={step.pos_y} />
                 )}
               </div>
