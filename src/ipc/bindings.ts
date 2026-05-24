@@ -66,6 +66,9 @@ export type ImageError = { RequestImage: string } | { ConvertToBytes: string }
 
 export type InstallLocation = "Applications" | "NotInApplications" | "Translocated" | "NotConcerned"
 
+/**
+ * Rectangle expressed in physical pixels, matching the coordinates used by the native window.
+ */
 export type InteractiveRegion = { x: number; y: number; width: number; height: number }
 
 export type IsOld = { from: string; to: string; isOld: boolean }
