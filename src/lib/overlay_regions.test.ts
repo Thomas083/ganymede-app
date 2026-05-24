@@ -96,6 +96,23 @@ describe('overlay regions', () => {
     ])
   })
 
+  it('collects explicit overlay hitboxes before hover expands UI', () => {
+    const hitbox = document.createElement('div')
+    hitbox.dataset.overlayInteractive = 'true'
+    setRect(hitbox, new DOMRect(0, 16, 180, 320))
+
+    document.body.append(hitbox)
+
+    expect(collectInteractiveRegions()).toEqual([
+      {
+        x: -2,
+        y: 14,
+        width: 184,
+        height: 324,
+      },
+    ])
+  })
+
   it('ignores disabled ARIA interactive elements', () => {
     const tab = document.createElement('div')
     tab.role = 'tab'

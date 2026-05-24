@@ -695,8 +695,9 @@ function GuideIdPage() {
             className={cn(
               'flex w-full bg-surface-card text-primary-foreground-800',
               isOverlayMode &&
-                'group/overlay-tabs shrink-0 flex-col border-r border-border-muted transition-[width] duration-150 w-[var(--overlay-sidebar-collapsed-width)] hover:w-[var(--overlay-sidebar-expanded-width)]',
-              isOverlayEditMode && 'relative w-[var(--overlay-sidebar-expanded-width)] hover:w-[var(--overlay-sidebar-expanded-width)] ring-2 ring-accent/70 transition-none',
+                'group/overlay-tabs relative z-10 w-[var(--overlay-sidebar-collapsed-width)] shrink-0 flex-col border-border-muted border-r transition-[width] duration-150 hover:w-[var(--overlay-sidebar-expanded-width)]',
+              isOverlayEditMode &&
+                'relative w-[var(--overlay-sidebar-expanded-width)] ring-2 ring-accent/70 transition-none hover:w-[var(--overlay-sidebar-expanded-width)]',
             )}
             data-overlay-interactive="true"
             data-overlay-editable={isOverlayEditMode ? 'true' : undefined}
@@ -715,20 +716,20 @@ function GuideIdPage() {
             {isOverlayEditMode && (
               <>
                 <div
-                  className="absolute top-1 h-[calc(100%-0.5rem)] w-2 -translate-x-1/2 cursor-ew-resize rounded bg-accent/70"
+                  className="-translate-x-1/2 absolute top-1 z-20 h-[calc(100%-0.5rem)] w-2 cursor-ew-resize rounded bg-accent/70"
                   data-overlay-resize-handle="true"
                   onPointerDown={(event) => startSidebarHandleResize(event, 'collapsedWidth')}
                   style={{ left: `${sidebarCollapsedWidth}px` }}
                   title="Largeur fermée"
                 />
                 <div
-                  className="absolute top-1 right-[-6px] h-[calc(100%-0.5rem)] w-2 cursor-ew-resize rounded border border-dashed border-accent bg-accent/40"
+                  className="absolute top-1 right-[-6px] z-20 h-[calc(100%-0.5rem)] w-2 cursor-ew-resize rounded border border-accent border-dashed bg-accent/40"
                   data-overlay-resize-handle="true"
                   onPointerDown={(event) => startSidebarHandleResize(event, 'expandedWidth')}
                   title="Largeur ouverte"
                 />
                 <div
-                  className="absolute right-1 bottom-1 h-2 w-[calc(100%-0.5rem)] cursor-ns-resize rounded bg-accent/70"
+                  className="absolute right-1 bottom-1 z-20 h-2 w-[calc(100%-0.5rem)] cursor-ns-resize rounded bg-accent/70"
                   data-overlay-resize-handle="true"
                   onPointerDown={(event) => startSidebarHandleResize(event, 'heightPercent')}
                   title="Longueur"
@@ -738,7 +739,7 @@ function GuideIdPage() {
             <TabsList
               className={cn(
                 'group scrollbar-hide h-10 flex-1 overflow-x-auto overflow-y-hidden pl-0',
-                isOverlayMode && 'h-full w-full flex-col overflow-x-hidden overflow-y-auto px-1 py-1',
+                isOverlayMode && 'relative z-10 h-full w-full flex-col overflow-y-auto overflow-x-hidden px-1 py-1',
               )}
               data-multiple={tabs.length > 1 ? 'true' : 'false'}
               data-overlay-mode={isOverlayMode ? 'true' : 'false'}
@@ -762,7 +763,7 @@ function GuideIdPage() {
               ))}
             </TabsList>
 
-            <div className={cn('flex items-center gap-1 px-3', isOverlayMode && 'justify-center px-1 py-1')}>
+            <div className={cn('flex items-center gap-1 px-3', isOverlayMode && 'relative z-10 justify-center px-1 py-1')}>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -790,6 +791,14 @@ function GuideIdPage() {
                 </Tooltip>
               </TooltipProvider>
             </div>
+            {/* Keep the native click-through region as wide as the hovered sidebar before CSS hover can expand it. */}
+            {isOverlayMode && (
+              <div
+                aria-hidden="true"
+                className="absolute inset-y-0 left-0 z-0 w-[var(--overlay-sidebar-expanded-width)]"
+                data-overlay-interactive="true"
+              />
+            )}
           </div>
 
           <div className="min-w-0 flex-1">
