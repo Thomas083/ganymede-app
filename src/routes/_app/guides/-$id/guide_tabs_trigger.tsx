@@ -192,6 +192,9 @@ export function GuideTabsTrigger({
                 )}
                 data-guide-id={id}
                 data-guide-tab="true"
+                onClick={async () => {
+                  await onOpenTab()
+                }}
                 onPointerDown={(evt) => onTabPointerDown(evt, id)}
               >
                 {dropPosition && (
@@ -212,11 +215,6 @@ export function GuideTabsTrigger({
                     !isSmallGuide && 'xs:text-sm lg:max-w-62',
                     isOverlayMode && 'h-12 w-full max-w-none justify-start rounded-md px-2 py-0',
                   )}
-                  onClick={async (evt) => {
-                    evt.preventDefault()
-
-                    await onOpenTab()
-                  }}
                   onMouseDown={(evt) => {
                     if (evt.button === 1) {
                       evt.preventDefault()
