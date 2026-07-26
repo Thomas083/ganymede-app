@@ -1,5 +1,6 @@
 import { platform } from '@tauri-apps/plugin-os'
 import { fromPromise, okAsync } from 'neverthrow'
+
 import { type InteractiveRegion } from '@/ipc/bindings.ts'
 import { taurpc } from '@/ipc/ipc.ts'
 

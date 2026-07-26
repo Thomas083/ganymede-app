@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { error } from '@tauri-apps/plugin-log'
 import { useEffect, useRef } from 'react'
+
 import { type InteractiveRegion } from '@/ipc/bindings.ts'
 import { isInteractiveOverlaySupported, setInteractiveRegions } from '@/ipc/overlay.ts'
 import {

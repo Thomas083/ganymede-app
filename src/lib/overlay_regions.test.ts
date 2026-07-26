@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import {
   areInteractiveRegionsEqual,
   collectInteractiveRegions,
@@ -6,35 +7,129 @@ import {
   toInteractiveRegion,
 } from './overlay_regions.ts'
 
-function setRect(element: HTMLElement, rect: DOMRect) {
-  element.getBoundingClientRect = () => rect
+type TestStyle = {
+  display?: string
+  visibility?: string
+  pointerEvents?: string
+}
+
+type TestNode = {
+  nodeType: number
+  parentElement: TestElement | null
+  textContent?: string
+}
+
+type TestElement = TestNode & {
+  ariaDisabled?: string
+  childNodes: TestNode[]
+  dataDisabled?: string
+  disabled?: boolean
+  getBoundingClientRect: () => DOMRect
+  href?: string
+  parentElement: TestElement | null
+  querySelectorAll: () => TestElement[]
+  role?: string
+  style: TestStyle
+}
+
+class TestDOMRect {
+  bottom: number
+  left: number
+  right: number
+  top: number
+
+  constructor(
+    left: number,
+    top: number,
+    public width: number,
+    public height: number,
+  ) {
+    this.left = left
+    this.top = top
+    this.right = left + width
+    this.bottom = top + height
+  }
+}
+
+const ELEMENT_NODE = 1
+const TEXT_NODE = 3
+
+function createElement(rect: DOMRect, style: TestStyle = {}): TestElement {
+  return {
+    childNodes: [],
+    getBoundingClientRect: () => rect,
+    nodeType: ELEMENT_NODE,
+    parentElement: null,
+    querySelectorAll() {
+      return this.childNodes.filter((node): node is TestElement => node.nodeType === ELEMENT_NODE)
+    },
+    style,
+  }
+}
+
+function createTextNode(textContent: string): TestNode {
+  return {
+    nodeType: TEXT_NODE,
+    parentElement: null,
+    textContent,
+  }
+}
+
+function append(parent: TestElement, ...children: TestNode[]) {
+  parent.childNodes.push(...children)
+
+  for (const child of children) {
+    child.parentElement = parent
+  }
+}
+
+function rootWith(...elements: TestElement[]) {
+  return {
+    querySelectorAll: () =>
+      elements.filter((element) => !element.disabled && element.ariaDisabled !== 'true' && !element.dataDisabled),
+  } as unknown as ParentNode
+}
+
+function rect(left: number, top: number, width: number, height: number) {
+  return new TestDOMRect(left, top, width, height) as DOMRect
 }
 
 function mockTextRects(...rects: DOMRect[]) {
-  vi.spyOn(document, 'createRange').mockReturnValue({
+  vi.mocked(document.createRange).mockReturnValue({
     detach: vi.fn(),
     getClientRects: () => rects as unknown as DOMRectList,
     selectNodeContents: vi.fn(),
   } as unknown as Range)
 }
 
-afterEach(() => {
-  vi.restoreAllMocks()
-  document.body.replaceChildren()
-  Object.defineProperty(window, 'devicePixelRatio', {
-    configurable: true,
-    value: 1,
+beforeEach(() => {
+  vi.stubGlobal('DOMRect', TestDOMRect)
+  vi.stubGlobal('Node', {
+    ELEMENT_NODE,
+    TEXT_NODE,
   })
+  vi.stubGlobal('window', {
+    devicePixelRatio: 1,
+    getComputedStyle: (element: TestElement) => ({
+      display: element.style.display ?? 'block',
+      pointerEvents: element.style.pointerEvents ?? 'auto',
+      visibility: element.style.visibility ?? 'visible',
+    }),
+  })
+  vi.stubGlobal('document', {
+    createRange: vi.fn(),
+  })
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
 })
 
 describe('overlay regions', () => {
   it('converts CSS pixels to physical pixels with DPR-aware padding', () => {
-    Object.defineProperty(window, 'devicePixelRatio', {
-      configurable: true,
-      value: 2,
-    })
+    window.devicePixelRatio = 2
 
-    expect(toInteractiveRegion(new DOMRect(10, 20, 30, 40))).toEqual({
+    expect(toInteractiveRegion(rect(10, 20, 30, 40))).toEqual({
       x: 16,
       y: 36,
       width: 68,
@@ -43,33 +138,19 @@ describe('overlay regions', () => {
   })
 
   it('treats elements hidden by a parent as invisible', () => {
-    const parent = document.createElement('div')
-    parent.style.display = 'none'
-    const button = document.createElement('button')
-    setRect(button, new DOMRect(0, 0, 10, 10))
+    const parent = createElement(rect(0, 0, 20, 20), { display: 'none' })
+    const button = createElement(rect(0, 0, 10, 10))
 
-    parent.append(button)
-    document.body.append(parent)
+    append(parent, button)
 
-    expect(isVisible(button)).toBe(false)
+    expect(isVisible(button as unknown as HTMLElement)).toBe(false)
   })
 
   it('collects visible interactive elements only', () => {
-    const button = document.createElement('button')
-    setRect(button, new DOMRect(10, 20, 30, 40))
+    const button = createElement(rect(10, 20, 30, 40))
+    const hiddenLink = createElement(rect(1, 1, 10, 10), { visibility: 'hidden' })
 
-    const disabledButton = document.createElement('button')
-    disabledButton.disabled = true
-    setRect(disabledButton, new DOMRect(1, 1, 10, 10))
-
-    const hiddenLink = document.createElement('a')
-    hiddenLink.href = '#'
-    hiddenLink.style.visibility = 'hidden'
-    setRect(hiddenLink, new DOMRect(1, 1, 10, 10))
-
-    document.body.append(button, disabledButton, hiddenLink)
-
-    expect(collectInteractiveRegions()).toEqual([
+    expect(collectInteractiveRegions(rootWith(button, hiddenLink))).toEqual([
       {
         x: 8,
         y: 18,
@@ -80,13 +161,10 @@ describe('overlay regions', () => {
   })
 
   it('collects ARIA tab triggers as interactive elements', () => {
-    const tab = document.createElement('div')
+    const tab = createElement(rect(4, 8, 120, 24))
     tab.role = 'tab'
-    setRect(tab, new DOMRect(4, 8, 120, 24))
 
-    document.body.append(tab)
-
-    expect(collectInteractiveRegions()).toEqual([
+    expect(collectInteractiveRegions(rootWith(tab))).toEqual([
       {
         x: 2,
         y: 6,
@@ -97,30 +175,21 @@ describe('overlay regions', () => {
   })
 
   it('ignores disabled ARIA interactive elements', () => {
-    const tab = document.createElement('div')
+    const tab = createElement(rect(4, 8, 120, 24))
+    tab.ariaDisabled = 'true'
     tab.role = 'tab'
-    tab.setAttribute('aria-disabled', 'true')
-    setRect(tab, new DOMRect(4, 8, 120, 24))
 
-    document.body.append(tab)
-
-    expect(collectInteractiveRegions()).toEqual([])
+    expect(collectInteractiveRegions(rootWith(tab))).toEqual([])
   })
 
   it('collects visible children of display contents interactive elements', () => {
-    const link = document.createElement('a')
+    const link = createElement(rect(0, 0, 0, 0), { display: 'contents' })
     link.href = '#'
-    link.style.display = 'contents'
-    setRect(link, new DOMRect(0, 0, 0, 0))
+    const label = createElement(rect(20, 30, 80, 12))
 
-    const label = document.createElement('span')
-    label.textContent = 'Open guide'
-    setRect(label, new DOMRect(20, 30, 80, 12))
+    append(link, label)
 
-    link.append(label)
-    document.body.append(link)
-
-    expect(collectInteractiveRegions()).toEqual([
+    expect(collectInteractiveRegions(rootWith(link))).toEqual([
       {
         x: 18,
         y: 28,
@@ -131,20 +200,16 @@ describe('overlay regions', () => {
   })
 
   it('collects text nodes of display contents interactive elements', () => {
-    mockTextRects(new DOMRect(40, 30, 72, 14))
+    mockTextRects(rect(40, 30, 72, 14))
 
-    const link = document.createElement('a')
+    const link = createElement(rect(0, 0, 0, 0), { display: 'contents' })
     link.href = '#'
-    link.style.display = 'contents'
-    setRect(link, new DOMRect(0, 0, 0, 0))
+    const icon = createElement(rect(20, 30, 12, 12))
+    const text = createTextNode(' Open guide')
 
-    const icon = document.createElement('img')
-    setRect(icon, new DOMRect(20, 30, 12, 12))
+    append(link, icon, text)
 
-    link.append(icon, document.createTextNode(' Open guide'))
-    document.body.append(link)
-
-    expect(collectInteractiveRegions()).toEqual([
+    expect(collectInteractiveRegions(rootWith(link))).toEqual([
       {
         x: 18,
         y: 28,
@@ -161,19 +226,16 @@ describe('overlay regions', () => {
   })
 
   it('ignores display contents interactive elements when their pointer path is hidden', () => {
-    const link = document.createElement('a')
+    const link = createElement(rect(0, 0, 0, 0), {
+      display: 'contents',
+      pointerEvents: 'none',
+    })
     link.href = '#'
-    link.style.display = 'contents'
-    link.style.pointerEvents = 'none'
-    setRect(link, new DOMRect(0, 0, 0, 0))
+    const label = createElement(rect(20, 30, 80, 12))
 
-    const label = document.createElement('span')
-    setRect(label, new DOMRect(20, 30, 80, 12))
+    append(link, label)
 
-    link.append(label)
-    document.body.append(link)
-
-    expect(collectInteractiveRegions()).toEqual([])
+    expect(collectInteractiveRegions(rootWith(link))).toEqual([])
   })
 
   it('compares region payloads by value', () => {
