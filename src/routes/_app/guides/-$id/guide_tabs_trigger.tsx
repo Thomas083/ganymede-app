@@ -183,6 +183,9 @@ export function GuideTabsTrigger({ id, currentId, dropPosition, isDragging, onTa
                 )}
                 data-guide-id={id}
                 data-guide-tab="true"
+                onClick={async () => {
+                  await onOpenTab()
+                }}
                 onPointerDown={(evt) => onTabPointerDown(evt, id)}
               >
                 {dropPosition && (
@@ -199,11 +202,6 @@ export function GuideTabsTrigger({ id, currentId, dropPosition, isDragging, onTa
                     'group/tab relative m-0 flex max-w-40 items-center gap-1.5 overflow-hidden rounded-lg bg-surface-inset text-xs font-medium whitespace-nowrap text-foreground/75 transition-none data-[state=active]:bg-surface-page data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-surface-page/50',
                     !isSmallGuide && 'xs:text-sm lg:max-w-62',
                   )}
-                  onClick={async (evt) => {
-                    evt.preventDefault()
-
-                    await onOpenTab()
-                  }}
                   onMouseDown={(evt) => {
                     if (evt.button === 1) {
                       evt.preventDefault()
