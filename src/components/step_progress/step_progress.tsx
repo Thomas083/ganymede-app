@@ -111,7 +111,12 @@ export function StepProgress({
                 )}
                 style={{ width: `${(current / total) * 100}%` }}
               />
-              <span className={cn('relative z-10 text-xs font-medium text-white drop-shadow select-none', compact && 'text-[10px]')}>
+              <span
+                className={cn(
+                  'relative z-10 text-xs font-medium text-white drop-shadow select-none',
+                  compact && 'text-[10px]',
+                )}
+              >
                 {current}/{total}
               </span>
             </div>

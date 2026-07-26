@@ -252,7 +252,10 @@ export function GuideTabsTrigger({
                     >
                       <div className="size-full bg-black/20">
                         <div
-                          className={cn('h-full rounded-b-xl bg-success', isOverlayMode && 'rounded-r-xl rounded-b-none')}
+                          className={cn(
+                            'h-full rounded-b-xl bg-success',
+                            isOverlayMode && 'rounded-r-xl rounded-b-none',
+                          )}
                           style={
                             isOverlayMode
                               ? { height: `${Math.min(progressPercent, 100)}%` }
@@ -320,7 +323,10 @@ export function GuideTabsTrigger({
             </ContextMenuItem>
           </ContextMenuContent>
         </ContextMenu>
-        <TooltipContent className={cn('xl:hidden', isOverlayMode && 'hidden')} side={isOverlayMode ? 'right' : 'bottom'}>
+        <TooltipContent
+          className={cn('xl:hidden', isOverlayMode && 'hidden')}
+          side={isOverlayMode ? 'right' : 'bottom'}
+        >
           {guide.name}
         </TooltipContent>
       </Tooltip>

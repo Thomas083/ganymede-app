@@ -68,7 +68,10 @@ export function GuidePage({ id, stepIndex: index }: { id: number; stepIndex: num
   const guideHeaderTopBase = OVERLAY_GUIDE_HEADER_BASE_TOP
   const guideHeaderHeight = OVERLAY_GUIDE_HEADER_HEIGHT
   const overlayHeaderWidthPercent = liveHeader?.widthPercent ?? overlayHeader.widthPercent
-  const guideHeaderContainerWidth = Math.max(240, ((viewportWidth - overlaySidebarWidth) * overlayHeaderWidthPercent) / 100)
+  const guideHeaderContainerWidth = Math.max(
+    240,
+    ((viewportWidth - overlaySidebarWidth) * overlayHeaderWidthPercent) / 100,
+  )
   const overlayHeaderLeft = isOverlayMode
     ? Math.max(
         0,
@@ -353,16 +356,16 @@ export function GuidePage({ id, stepIndex: index }: { id: number; stepIndex: num
           transform: isOverlayMode ? `translateY(${overlayHeaderTopOffset}px)` : undefined,
         }}
       >
-        <div
-          className={cn('flex h-10 items-center p-1 min-w-0')}
-          style={isOverlayMode ? { width: '100%' } : undefined}
-        >
+        <div className={cn('flex h-10 min-w-0 items-center p-1')} style={isOverlayMode ? { width: '100%' } : undefined}>
           {step && (
             <>
-              <div className={cn('flex w-16 shrink-0 items-center justify-start pl-1 pr-3', isOverlayMode && 'w-10 pr-6 pl-0')}>
-                {hasValidMap(step) && (
-                  <Position compact={isOverlayMode} pos_x={step.pos_x} pos_y={step.pos_y} />
+              <div
+                className={cn(
+                  'flex w-16 shrink-0 items-center justify-start pr-3 pl-1',
+                  isOverlayMode && 'w-10 pr-6 pl-0',
                 )}
+              >
+                {hasValidMap(step) && <Position compact={isOverlayMode} pos_x={step.pos_x} pos_y={step.pos_y} />}
               </div>
 
               <div className={cn('flex flex-1 items-center justify-center pl-1', isOverlayMode && 'ml-6')}>
@@ -389,9 +392,7 @@ export function GuidePage({ id, stepIndex: index }: { id: number; stepIndex: num
                   onOpenNote={handleOpenNote}
                   stepIndex={index}
                 />
-                {showSummary && (
-                  <SummaryDialogTrigger compact={isOverlayMode} onClick={() => setSummaryOpen(true)} />
-                )}
+                {showSummary && <SummaryDialogTrigger compact={isOverlayMode} onClick={() => setSummaryOpen(true)} />}
                 {showReport && <ReportDialogTrigger compact={isOverlayMode} onClick={() => setReportOpen(true)} />}
               </div>
               <div className="flex w-fit shrink-0 items-center justify-end pr-1 xs:hidden">

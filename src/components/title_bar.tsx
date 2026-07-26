@@ -279,7 +279,7 @@ export function TitleBar() {
           <>
             <button
               className={cn(
-                'inline-flex h-titlebar w-6 xs:w-titlebar items-center justify-center',
+                'inline-flex h-titlebar w-6 items-center justify-center xs:w-titlebar',
                 isOverlayEditMode ? 'bg-accent/70 text-accent-foreground hover:bg-accent' : 'hover:bg-surface-card',
               )}
               data-overlay-edit-allow="true"
@@ -290,7 +290,7 @@ export function TitleBar() {
             </button>
             {isOverlayEditMode && (
               <button
-                className="inline-flex h-titlebar w-6 xs:w-titlebar items-center justify-center cursor-grab bg-accent/30 hover:bg-accent/50"
+                className="inline-flex h-titlebar w-6 cursor-grab items-center justify-center bg-accent/30 hover:bg-accent/50 xs:w-titlebar"
                 data-overlay-edit-allow="true"
                 onPointerDown={startTitleBarDrag}
                 title={t`Déplacer la barre`}

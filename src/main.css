@@ -559,33 +559,32 @@
       var(--color-surface-card) calc(var(--overlay-clickable-visibility) * 100%),
       transparent
     );
-    box-shadow:
-      0 0 0 1px
+    box-shadow: 0 0 0 1px
       color-mix(in srgb, var(--color-border-muted) calc(var(--overlay-clickable-visibility) * 100%), transparent);
     backdrop-filter: blur(1px);
   }
 
-  :root[data-overlay-edit-mode="true"] a[href]:not([data-overlay-edit-allow="true"]),
-  :root[data-overlay-edit-mode="true"] button:not([data-overlay-edit-allow="true"]),
-  :root[data-overlay-edit-mode="true"] input:not([type="hidden"]):not([data-overlay-edit-allow="true"]),
-  :root[data-overlay-edit-mode="true"] textarea:not([data-overlay-edit-allow="true"]),
-  :root[data-overlay-edit-mode="true"] select:not([data-overlay-edit-allow="true"]),
-  :root[data-overlay-edit-mode="true"] [role="button"]:not([data-overlay-edit-allow="true"]) {
+  :root[data-overlay-edit-mode='true'] a[href]:not([data-overlay-edit-allow='true']),
+  :root[data-overlay-edit-mode='true'] button:not([data-overlay-edit-allow='true']),
+  :root[data-overlay-edit-mode='true'] input:not([type='hidden']):not([data-overlay-edit-allow='true']),
+  :root[data-overlay-edit-mode='true'] textarea:not([data-overlay-edit-allow='true']),
+  :root[data-overlay-edit-mode='true'] select:not([data-overlay-edit-allow='true']),
+  :root[data-overlay-edit-mode='true'] [role='button']:not([data-overlay-edit-allow='true']) {
     pointer-events: none !important;
   }
 
-  :root[data-overlay-edit-mode="true"] [data-overlay-editable="true"] *:not([data-overlay-edit-allow="true"]):not(
-      [data-overlay-resize-handle="true"]
-    ) {
+  :root[data-overlay-edit-mode='true']
+    [data-overlay-editable='true']
+    *:not([data-overlay-edit-allow='true']):not([data-overlay-resize-handle='true']) {
     pointer-events: none !important;
   }
 
-  :root[data-overlay-edit-mode="true"] [data-overlay-edit-allow="true"],
-  :root[data-overlay-edit-mode="true"] [data-overlay-resize-handle="true"] {
+  :root[data-overlay-edit-mode='true'] [data-overlay-edit-allow='true'],
+  :root[data-overlay-edit-mode='true'] [data-overlay-resize-handle='true'] {
     pointer-events: auto !important;
   }
 
-  :root[data-overlay-visible="false"] * {
+  :root[data-overlay-visible='false'] * {
     pointer-events: none !important;
   }
 }

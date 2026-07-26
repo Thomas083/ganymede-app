@@ -173,7 +173,7 @@ function LocalGuideItem({ guide, isSelected, onSelect, isSelectMode, isPinned, p
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <h3 className="line-clamp-2 w-full font-semibold text-sm leading-tight">{guide.name}</h3>
+            <h3 className="line-clamp-2 w-full text-sm leading-tight font-semibold">{guide.name}</h3>
           </TooltipTrigger>
           <TooltipContent className="max-w-[250px]" side="top">
             {guide.name}
@@ -327,7 +327,7 @@ function LocalGuideItem({ guide, isSelected, onSelect, isSelectMode, isPinned, p
 function ServerGuideItem({ guide, intl, isGuideDownloaded, currentStep }: ServerGuideItemProps) {
   const mobileContent = (
     <>
-      <h3 className="line-clamp-2 font-semibold text-sm leading-tight">{guide.name}</h3>
+      <h3 className="line-clamp-2 text-sm leading-tight font-semibold">{guide.name}</h3>
       <div className="flex flex-wrap items-center gap-2 text-xxs text-muted-foreground">
         <span className="flex items-center gap-1">
           {guide.downloads !== null ? intl.format(guide.downloads) : 'N/A'}
@@ -355,7 +355,7 @@ function ServerGuideItem({ guide, intl, isGuideDownloaded, currentStep }: Server
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <h3 className="line-clamp-2 font-semibold text-sm leading-tight">{guide.name}</h3>
+            <h3 className="line-clamp-2 text-sm leading-tight font-semibold">{guide.name}</h3>
           </TooltipTrigger>
           <TooltipContent className="max-w-[250px]" side="top">
             {guide.name}

@@ -3,8 +3,8 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip.tsx'
-import { cn } from '@/lib/utils.ts'
 import { copyPosition } from '@/lib/copy_position.ts'
+import { cn } from '@/lib/utils.ts'
 import { confQuery } from '@/queries/conf.query.ts'
 
 export function Position({ pos_x, pos_y, compact = false }: { pos_x: number; pos_y: number; compact?: boolean }) {
@@ -24,8 +24,7 @@ export function Position({ pos_x, pos_y, compact = false }: { pos_x: number; pos
           <button
             className={cn(
               'cursor-pointer text-start text-sm text-yellow-400',
-              compact &&
-                'overlay-clickable rounded-md px-1.5 py-0.5 text-xs',
+              compact && 'overlay-clickable rounded-md px-1.5 py-0.5 text-xs',
             )}
             onClick={onClick}
           >
