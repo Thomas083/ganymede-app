@@ -62,7 +62,9 @@ export function EditorHtmlParsing({
   const toggleGuideCheckbox = useToggleGuideCheckbox()
   const currentGuide = useGuideIfDefined(guideId)
   const overlayClickableClass = conf.data.overlayMode ? 'overlay-clickable rounded-md px-1 py-0.5' : undefined
-  const overlayClickableInlineClass = conf.data.overlayMode ? 'overlay-clickable inline-flex rounded-md px-1 py-0.5' : undefined
+  const overlayClickableInlineClass = conf.data.overlayMode
+    ? 'overlay-clickable inline-flex rounded-md px-1 py-0.5'
+    : undefined
 
   let checkboxesCount = 0
 
@@ -183,10 +185,7 @@ export function EditorHtmlParsing({
                 {guideId === domGuideId || domGuideId === 0 ? (
                   <Link
                     {...attribs}
-                    className={cn(
-                      'contents select-none data-[type=guide-step]:no-underline',
-                      domNode.attribs.class,
-                    )}
+                    className={cn('contents select-none data-[type=guide-step]:no-underline', domNode.attribs.class)}
                     disabled={disabled}
                     draggable={false}
                     params={{ id: domGuideId === 0 ? (guideId ?? domGuideId) : domGuideId }}
@@ -198,7 +197,7 @@ export function EditorHtmlParsing({
                     )}
                     <span
                       className={cn(
-                        'hover:saturate-200 focus:saturate-[25%] group-focus-within:saturate-[25%] peer-hover:saturate-200',
+                        'group-focus-within:saturate-[25%] peer-hover:saturate-200 hover:saturate-200 focus:saturate-[25%]',
                         overlayClickableInlineClass,
                       )}
                     >
@@ -249,7 +248,7 @@ export function EditorHtmlParsing({
                     )}
                     <span
                       className={cn(
-                        'hover:saturate-200 focus:saturate-[25%] group-focus-within:saturate-[25%] peer-hover:saturate-200',
+                        'group-focus-within:saturate-[25%] peer-hover:saturate-200 hover:saturate-200 focus:saturate-[25%]',
                         overlayClickableInlineClass,
                       )}
                     >
@@ -337,12 +336,17 @@ export function EditorHtmlParsing({
                 })()}
                 type="button"
               >
-                <span className={cn('peer group-focus-within:saturate-[25%] group-hover:saturate-150', overlayClickableClass)}>
+                <span
+                  className={cn(
+                    'peer group-focus-within:saturate-[25%] group-hover:saturate-150',
+                    overlayClickableClass,
+                  )}
+                >
                   {domToReact([domNode.children[0]] as DOMNode[], options)}
                 </span>
                 <span
                   className={cn(
-                    'hover:saturate-150 focus:saturate-[25%] group-focus-within:saturate-[25%] group-hover:saturate-150',
+                    'group-focus-within:saturate-[25%] group-hover:saturate-150 hover:saturate-150 focus:saturate-[25%]',
                     overlayClickableClass,
                   )}
                 >

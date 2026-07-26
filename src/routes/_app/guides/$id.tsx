@@ -544,7 +544,10 @@ function GuideIdPage() {
   const sidebarHeightPx = Math.max(48, Math.round((availableSidebarHeight * sidebarHeightPercent) / 100))
   const sidebarOffsetY = Math.max(
     0,
-    Math.min(liveSidebar?.offsetY ?? normalizedOverlaySidebar.offsetY, Math.max(0, availableSidebarHeight - sidebarHeightPx)),
+    Math.min(
+      liveSidebar?.offsetY ?? normalizedOverlaySidebar.offsetY,
+      Math.max(0, availableSidebarHeight - sidebarHeightPx),
+    ),
   )
 
   useEffect(() => {
@@ -695,8 +698,9 @@ function GuideIdPage() {
             className={cn(
               'flex w-full bg-surface-card text-primary-foreground-800',
               isOverlayMode &&
-                'group/overlay-tabs shrink-0 flex-col border-r border-border-muted transition-[width] duration-150 w-[var(--overlay-sidebar-collapsed-width)] hover:w-[var(--overlay-sidebar-expanded-width)]',
-              isOverlayEditMode && 'relative w-[var(--overlay-sidebar-expanded-width)] hover:w-[var(--overlay-sidebar-expanded-width)] ring-2 ring-accent/70 transition-none',
+                'group/overlay-tabs w-[var(--overlay-sidebar-collapsed-width)] shrink-0 flex-col border-r border-border-muted transition-[width] duration-150 hover:w-[var(--overlay-sidebar-expanded-width)]',
+              isOverlayEditMode &&
+                'relative w-[var(--overlay-sidebar-expanded-width)] ring-2 ring-accent/70 transition-none hover:w-[var(--overlay-sidebar-expanded-width)]',
             )}
             data-overlay-interactive="true"
             data-overlay-editable={isOverlayEditMode ? 'true' : undefined}

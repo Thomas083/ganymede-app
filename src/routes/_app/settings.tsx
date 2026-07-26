@@ -49,7 +49,7 @@ export const Route = createFileRoute('/_app/settings')({
     const { t } = useLingui()
 
     return (
-      <Page key="settings-page" title={t`ParamÃ¨tres`}>
+      <Page key="settings-page" title={t`Paramètres`}>
         <PageScrollableContent className="flex items-center justify-center">
           <GenericLoader />
         </PageScrollableContent>
@@ -155,15 +155,15 @@ function Settings() {
     <Page
       backButton={<BackButtonLink from={Route.fullPath} hash={hash} search={search} state={state} to={from} />}
       key="settings-page"
-      title={t`ParamÃ¨tres`}
+      title={t`Paramètres`}
     >
       <PageScrollableContent className="py-2">
         <div className="container flex max-w-lg flex-col gap-4 px-2 py-2">
-          <SettingCard id="section-general" title={<Trans>GÃ©nÃ©ral</Trans>}>
+          <SettingCard id="section-general" title={<Trans>Général</Trans>}>
             <SettingCardSection id="section-auto-open-guides">
               <div className="flex items-center justify-between gap-2">
                 <Label className="text-xs" htmlFor="auto-open-guides">
-                  <Trans>Ouvrir les guides Ã  l'ouverture</Trans>
+                  <Trans>Ouvrir les guides à l'ouverture</Trans>
                 </Label>
                 <Switch
                   checked={conf.data.autoOpenGuides}
@@ -223,7 +223,7 @@ function Settings() {
             <SettingCardSection id="section-show-done-guides">
               <div className="flex items-center justify-between gap-2">
                 <Label className="text-xs" htmlFor="show-done-guides">
-                  <Trans>Afficher les guides terminÃ©s</Trans>
+                  <Trans>Afficher les guides terminés</Trans>
                 </Label>
                 <Switch
                   checked={conf.data.showDoneGuides}
@@ -244,9 +244,7 @@ function Settings() {
                     <Trans>Mode overlay</Trans>
                   </Label>
                   <p className="text-[11px] text-muted-foreground">
-                    <Trans>
-                      Laisse passer les clics vers Dofus sauf sur les Ã©lÃ©ments interactifs de GanymÃ¨de.
-                    </Trans>
+                    <Trans>Laisse passer les clics vers Dofus sauf sur les éléments interactifs de Ganymède.</Trans>
                   </p>
                 </div>
                 <Switch
@@ -265,7 +263,7 @@ function Settings() {
           <SettingCard id="section-appearance" title={<Trans>Apparence</Trans>}>
             <SettingCardSection id="section-opacity">
               <Label className="text-xs" htmlFor="opacity">
-                <Trans>OpacitÃ©</Trans>
+                <Trans>Opacité</Trans>
               </Label>
               <Slider
                 defaultValue={[conf.data.opacity * 100]}
@@ -295,7 +293,7 @@ function Settings() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ExtraSmall">
-                    <Trans>TrÃ¨s petite</Trans>
+                    <Trans>Très petite</Trans>
                   </SelectItem>
                   <SelectItem value="Small">
                     <Trans>Petite</Trans>
@@ -307,7 +305,7 @@ function Settings() {
                     <Trans>Grande</Trans>
                   </SelectItem>
                   <SelectItem value="ExtraLarge">
-                    <Trans>TrÃ¨s grande</Trans>
+                    <Trans>Très grande</Trans>
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -357,12 +355,16 @@ function Settings() {
           {(conf.data.overlayMode ?? false) && (
             <SettingCard
               className="slot-[card-description]:text-xs"
-              description={<Trans>Le placement des blocs overlay se fait directement dans l'interface via le bouton Mode édition.</Trans>}
+              description={
+                <Trans>
+                  Le placement des blocs overlay se fait directement dans l'interface via le bouton Mode édition.
+                </Trans>
+              }
               id="section-overlay-layout"
               title={<Trans>Layout overlay</Trans>}
             >
               <SettingCardSection id="section-overlay-clickable-visibility">
-                <p className="font-medium text-xs leading-none">
+                <p className="text-xs leading-none font-medium">
                   <Trans>Éléments cliquables</Trans>
                 </p>
                 <OverlaySlider
@@ -385,8 +387,8 @@ function Settings() {
             className="slot-[card-content]:pt-0 slot-[card-description]:text-xs"
             description={
               <Trans>
-                Note : Les raccourcis dÃ©jÃ  utilisÃ©s par d'autres applications (AMD Adrenalin, Nvidia App, etc.) ne
-                peuvent pas Ãªtre enregistrÃ©s. Supprimez-les d'abord dans ces applications.
+                Note : Les raccourcis déjà utilisés par d'autres applications (AMD Adrenalin, Nvidia App, etc.) ne
+                peuvent pas être enregistrés. Supprimez-les d'abord dans ces applications.
               </Trans>
             }
             id="section-shortcuts"
@@ -394,9 +396,9 @@ function Settings() {
           >
             <SettingCardSection id="section-shortcuts-inputs">
               <ShortcutInput
-                description={t`Efface tous vos profils et paramÃ¨tres (pas les guides)`}
+                description={t`Efface tous vos profils et paramètres (pas les guides)`}
                 id="reset-conf"
-                label={t`RÃ©initialiser la configuration`}
+                label={t`Réinitialiser la configuration`}
                 onChange={async (value) => {
                   try {
                     await setConf.mutateAsync({
@@ -407,16 +409,16 @@ function Settings() {
                       },
                     })
                     await reregisterShortcuts.mutateAsync()
-                    toast.success(t`Raccourci mis Ã  jour`)
+                    toast.success(t`Raccourci mis à jour`)
                   } catch {
-                    toast.error(t`Erreur lors de la mise Ã  jour du raccourci`)
+                    toast.error(t`Erreur lors de la mise à jour du raccourci`)
                   }
                 }}
                 value={conf.data.shortcuts?.resetConf}
               />
               <ShortcutInput
                 id="go-previous-step"
-                label={t`Ã‰tape prÃ©cÃ©dente`}
+                label={t`Étape précédente`}
                 onChange={async (value) => {
                   try {
                     await setConf.mutateAsync({
@@ -427,16 +429,16 @@ function Settings() {
                       },
                     })
                     await reregisterShortcuts.mutateAsync()
-                    toast.success(t`Raccourci mis Ã  jour`)
+                    toast.success(t`Raccourci mis à jour`)
                   } catch {
-                    toast.error(t`Erreur lors de la mise Ã  jour du raccourci`)
+                    toast.error(t`Erreur lors de la mise à jour du raccourci`)
                   }
                 }}
                 value={conf.data.shortcuts?.goPreviousStep}
               />
               <ShortcutInput
                 id="go-next-step"
-                label={t`Ã‰tape suivante`}
+                label={t`Étape suivante`}
                 onChange={async (value) => {
                   try {
                     await setConf.mutateAsync({
@@ -447,16 +449,16 @@ function Settings() {
                       },
                     })
                     await reregisterShortcuts.mutateAsync()
-                    toast.success(t`Raccourci mis Ã  jour`)
+                    toast.success(t`Raccourci mis à jour`)
                   } catch {
-                    toast.error(t`Erreur lors de la mise Ã  jour du raccourci`)
+                    toast.error(t`Erreur lors de la mise à jour du raccourci`)
                   }
                 }}
                 value={conf.data.shortcuts?.goNextStep}
               />
               <ShortcutInput
                 id="copy-current-step"
-                label={t`Copier l'Ã©tape actuelle`}
+                label={t`Copier l'étape actuelle`}
                 onChange={async (value) => {
                   try {
                     await setConf.mutateAsync({
@@ -467,16 +469,16 @@ function Settings() {
                       },
                     })
                     await reregisterShortcuts.mutateAsync()
-                    toast.success(t`Raccourci mis Ã  jour`)
+                    toast.success(t`Raccourci mis à jour`)
                   } catch {
-                    toast.error(t`Erreur lors de la mise Ã  jour du raccourci`)
+                    toast.error(t`Erreur lors de la mise à jour du raccourci`)
                   }
                 }}
                 value={conf.data.shortcuts?.copyCurrentStep}
               />
               <ShortcutInput
                 id="toggle-visibility"
-                label={t`Afficher / masquer GanymÃ¨de`}
+                label={t`Afficher / masquer Ganymède`}
                 onChange={async (value) => {
                   try {
                     await setConf.mutateAsync({
@@ -487,9 +489,9 @@ function Settings() {
                       },
                     })
                     await reregisterShortcuts.mutateAsync()
-                    toast.success(t`Raccourci mis Ã  jour`)
+                    toast.success(t`Raccourci mis à jour`)
                   } catch {
-                    toast.error(t`Erreur lors de la mise Ã  jour du raccourci`)
+                    toast.error(t`Erreur lors de la mise à jour du raccourci`)
                   }
                 }}
                 value={conf.data.shortcuts?.toggleVisibility}
@@ -504,7 +506,7 @@ function Settings() {
             </SettingCardSection>
             <SettingCardSection id="section-create-profile">
               <Label className="text-xs" htmlFor="create-profile">
-                <Trans>CrÃ©er un profil</Trans>
+                <Trans>Créer un profil</Trans>
               </Label>
               <form
                 className="flex flex-col gap-2"
@@ -551,18 +553,18 @@ function Settings() {
                       }
                     })
 
-                    toast.success(t`Profil crÃ©Ã© avec succÃ¨s`)
+                    toast.success(t`Profil créé avec succès`)
 
                     form.newProfile.value = ''
                   } else {
-                    toast.error(t`Erreur lors de la crÃ©ation du profil. VÃ©rifiez le nom du profil (nom unique).`)
+                    toast.error(t`Erreur lors de la création du profil. Vérifiez le nom du profil (nom unique).`)
                   }
                 }}
               >
                 <Input className="h-9" id="create-profile" name="newProfile" />
                 <Button className="self-start" type="submit">
                   <span>
-                    <Trans>CrÃ©er</Trans>
+                    <Trans>Créer</Trans>
                   </span>
                   {newId.isError && <TriangleAlertIcon className="text-red-500" />}
                 </Button>

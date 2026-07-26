@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { useLocation } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
 import { error } from '@tauri-apps/plugin-log'
-import { InteractiveRegion } from '@/ipc/bindings.ts'
+import { useEffect, useState } from 'react'
+
 import { useWebviewEvent } from '@/hooks/use_webview_event.ts'
+import { InteractiveRegion } from '@/ipc/bindings.ts'
 import { setInteractiveRegions } from '@/ipc/overlay.ts'
 import { isOverlayEditModeEnabled } from '@/lib/overlay_layout.ts'
 import { confQuery } from '@/queries/conf.query.ts'
@@ -96,7 +97,8 @@ export function useOverlaySync() {
     function syncNow() {
       frameId = 0
 
-      const interactiveRegions = isSettingsRoute || isOverlayEditMode ? getFullWindowInteractiveRegion() : collectInteractiveRegions()
+      const interactiveRegions =
+        isSettingsRoute || isOverlayEditMode ? getFullWindowInteractiveRegion() : collectInteractiveRegions()
 
       setInteractiveRegions(interactiveRegions).then((result) => {
         if (result.isErr()) {
