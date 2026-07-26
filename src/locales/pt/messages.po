@@ -1573,3 +1573,19 @@ msgstr "Você está usando a versão <0>{fromVersion}</0>."
 #: src/routes/_app/guides/-index/delete_guides_dialog.tsx:54
 msgid "Vous vous apprêtez à supprimer des guides de votre système. La progression ne sera pas supprimée."
 msgstr "Está prestes a eliminar guias do seu sistema. O progresso não será eliminado."
+
+#: src/routes/_app/settings.tsx:162
+msgid "Copie automatique au changement d'étape"
+msgstr "Cópia automática ao mudar de passo"
+
+#: src/routes/_app/guides/-$id/guide_page.tsx:75
+msgid "Erreur lors de la copie automatique de la position."
+msgstr "Erro ao copiar automaticamente a posição."
+
+#: src/routes/_app/settings.tsx:181
+msgid "Source de la copie automatique"
+msgstr "Origem da cópia automática"
+
+#: src/routes/_app/settings.tsx:198
+msgid "Étape actuelle"
+msgstr "Passo atual"
